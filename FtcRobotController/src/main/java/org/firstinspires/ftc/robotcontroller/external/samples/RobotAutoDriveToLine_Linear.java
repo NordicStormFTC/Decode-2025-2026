@@ -32,13 +32,15 @@ package org.firstinspires.ftc.robotcontroller.external.samples;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
 
-/*
- * This OpMode illustrates the concept of driving up to a line and then stopping.
+/**
+ * This file illustrates the concept of driving up to a line and then stopping.
  * The code is structured as a LinearOpMode
  *
  * The Sensor used here can be a REV Color Sensor V2 or V3.  Make sure the white LED is turned on.
@@ -68,7 +70,7 @@ public class RobotAutoDriveToLine_Linear extends LinearOpMode {
     private DcMotor         leftDrive   = null;
     private DcMotor         rightDrive  = null;
 
-    /** The variable to store a reference to our color sensor hardware object */
+    /** The colorSensor field will contain a reference to our color sensor hardware object */
     NormalizedColorSensor colorSensor;
 
     static final double     WHITE_THRESHOLD = 0.5;  // spans between 0.0 - 1.0 from dark to light
@@ -88,8 +90,8 @@ public class RobotAutoDriveToLine_Linear extends LinearOpMode {
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         // If there are encoders connected, switch to RUN_USING_ENCODER mode for greater accuracy
-        // leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        // rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // robot.leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // robot.rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Get a reference to our sensor object. It's recommended to use NormalizedColorSensor over
         // ColorSensor, because NormalizedColorSensor consistently gives values between 0 and 1, while
@@ -106,7 +108,7 @@ public class RobotAutoDriveToLine_Linear extends LinearOpMode {
         // A gain of 15 causes a Rev Color Sensor V2 to produce an Alpha value of 1.0 at about 1.5" above the floor.
         colorSensor.setGain(15);
 
-        // Wait for driver to press START)
+        // Wait for driver to press PLAY)
         // Abort this loop is started or stopped.
         while (opModeInInit()) {
 

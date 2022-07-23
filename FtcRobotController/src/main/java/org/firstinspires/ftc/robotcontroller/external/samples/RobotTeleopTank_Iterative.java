@@ -36,8 +36,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
-/*
- * This OpMode executes a Tank Drive control TeleOp a direct drive robot
+/**
+ * This particular OpMode executes a Tank Drive control TeleOp a direct drive robot
  * The code is structured as an Iterative OpMode
  *
  * In this mode, the left and right joysticks control the left and right motors respectively.
@@ -84,8 +84,8 @@ public class RobotTeleopTank_Iterative extends OpMode{
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         // If there are encoders connected, switch to RUN_USING_ENCODER mode for greater accuracy
-        // leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        // rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // robot.leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // robot.rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Define and initialize ALL installed servos.
         leftClaw  = hardwareMap.get(Servo.class, "left_hand");
@@ -94,25 +94,25 @@ public class RobotTeleopTank_Iterative extends OpMode{
         rightClaw.setPosition(MID_SERVO);
 
         // Send telemetry message to signify robot waiting;
-        telemetry.addData(">", "Robot Ready.  Press START.");    //
+        telemetry.addData("Say", "Hello Driver");    //
     }
 
     /*
-     * Code to run REPEATEDLY after the driver hits INIT, but before they hit START
+     * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
      */
     @Override
     public void init_loop() {
     }
 
     /*
-     * Code to run ONCE when the driver hits START
+     * Code to run ONCE when the driver hits PLAY
      */
     @Override
     public void start() {
     }
 
     /*
-     * Code to run REPEATEDLY after the driver hits START but before they hit STOP
+     * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
      */
     @Override
     public void loop() {
