@@ -37,6 +37,7 @@ import java.util.List;
 @TeleOp(name = "Tuning", group = "Pedro Pathing")
 public class Tuning extends SelectableOpMode {
     public static Follower follower;
+
     @IgnoreConfigurable
     static PoseHistory poseHistory;
 
@@ -156,8 +157,6 @@ class LocalizationTest extends OpMode {
         telemetryM.debug("y:" + follower.getPose().getY());
         telemetryM.debug("heading:" + follower.getPose().getHeading());
         telemetryM.debug("total heading:" + follower.getTotalHeading());
-        telemetryM.addData("This got deployed", true);
-        telemetry.addData("This got deployed", true);
         telemetryM.update(telemetry);
 
         drawCurrentAndHistory();
