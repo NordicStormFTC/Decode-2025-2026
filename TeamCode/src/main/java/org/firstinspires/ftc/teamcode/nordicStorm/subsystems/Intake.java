@@ -12,4 +12,6 @@ public class Intake {
     public Intake(final HardwareMap hardwareMap) {
 
     }
+
+    public void example(){}
 }
