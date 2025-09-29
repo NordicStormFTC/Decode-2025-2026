@@ -6,6 +6,7 @@ import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstan
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.rightRearMotorName;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -17,6 +18,9 @@ import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.util.PIDFController;
 import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Constants;
+
+import java.util.List;
+
 public class DriveTrain {
 
 
@@ -86,6 +90,7 @@ public class DriveTrain {
         }
     }
 
+
     public void seekBall(final Telemetry telemetry) {
         if (llResultsAreGood()) {
             double rotationError = llResult.getTx();
@@ -122,16 +127,20 @@ public class DriveTrain {
         telemetry.update();
     }
 
-    public void setTeleopMovementVectors(double forwardDrive, double lateralDrive, double heading, boolean robotCentric) {
-        this.follower.setTeleOpMovementVectors(forwardDrive, lateralDrive, heading, robotCentric);
-    }
+    public void aim(final Telemetry telemetry) {
+        if (llResultsAreGood()) {
+            Pose3D botPose = llResult.getBotpose();
+            List<LLResultTypes.FiducialResult> tags = limelight.getLatestResult().getFiducialResults();
 
+        }
+    }
     private double metersToInches(double meters) {
         return meters * Constants.metersToInches;
     }
 
     private LLResult getLLResult() {
-        return limelight.getLatestResult();
+        llResult =  limelight.getLatestResult();
+        return llResult;
     }
 
     private boolean llResultsAreGood() {
