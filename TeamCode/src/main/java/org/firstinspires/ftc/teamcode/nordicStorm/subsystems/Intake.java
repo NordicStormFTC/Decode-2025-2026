@@ -15,7 +15,7 @@ public class Intake {
     private DcMotorEx intakeMotor;
 
     public Intake(final HardwareMap hardwareMap) {
-        intakeMotor = hardwareMap.get(DcMotorEx.class, intakeMotorName);
+        //intakeMotor = hardwareMap.get(DcMotorEx.class, intakeMotorName);
 
     }
 

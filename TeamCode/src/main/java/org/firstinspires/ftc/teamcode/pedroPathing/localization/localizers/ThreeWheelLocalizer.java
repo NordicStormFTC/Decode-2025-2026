@@ -78,20 +78,20 @@ public class ThreeWheelLocalizer extends Localizer {
      */
     public ThreeWheelLocalizer(HardwareMap map, Pose setStartPose) {
         // TODO: replace these with your encoder positions
-        leftEncoderPose = new Pose(3, 0.01, 0);
-        rightEncoderPose = new Pose(-2, 0.01, 0);
-        strafeEncoderPose = new Pose(0.01, 0.01, Math.toRadians(90));
+        leftEncoderPose = new Pose(1.21, 6.76574803, 0);
+        rightEncoderPose = new Pose(1.21, -6.76574803, 0);
+        strafeEncoderPose = new Pose(2.85590, 0, Math.toRadians(90));
 
         hardwareMap = map;
 
         // TODO: replace these with your encoder ports
-        leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "par1"));
-        rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "par2"));
-        strafeEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "strafe"));
+        leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "lb"));
+        rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "lf"));
+        strafeEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "rf"));
 
         // TODO: reverse any encoders necessary
-        leftEncoder.setDirection(Encoder.REVERSE);
-        rightEncoder.setDirection(Encoder.REVERSE);
+        leftEncoder.setDirection(Encoder.FORWARD);
+        rightEncoder.setDirection(Encoder.FORWARD);
         strafeEncoder.setDirection(Encoder.FORWARD);
 
         setStartPose(setStartPose);

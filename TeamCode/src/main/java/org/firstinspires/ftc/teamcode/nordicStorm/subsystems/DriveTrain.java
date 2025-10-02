@@ -50,7 +50,7 @@ public class DriveTrain {
 
         follower.setStartingPose(new Pose());
 
-        limelight = hardwareMap.get(Limelight3A.class, "lime");
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.pipelineSwitch(Constants.aprilTagPipeline);
 
         limelight.start();
