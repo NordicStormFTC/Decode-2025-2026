@@ -26,11 +26,6 @@ public class DriveTrain {
 
     public final Follower follower;
 
-    private final DcMotorEx leftFront;
-    private final DcMotorEx leftRear;
-    private final DcMotorEx rightFront;
-    private final DcMotorEx rightRear;
-
     private final Limelight3A limelight;
 
     private LLResult llResult;
@@ -43,12 +38,8 @@ public class DriveTrain {
     public DriveTrain(final HardwareMap hardwareMap) {
         follower = new Follower(hardwareMap);
 
-        leftFront = hardwareMap.get(DcMotorEx.class, leftFrontMotorName);
-        leftRear = hardwareMap.get(DcMotorEx.class, leftRearMotorName);
-        rightRear = hardwareMap.get(DcMotorEx.class, rightRearMotorName);
-        rightFront = hardwareMap.get(DcMotorEx.class, rightFrontMotorName);
-
         follower.setStartingPose(new Pose());
+        follower.initialize();
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.pipelineSwitch(Constants.aprilTagPipeline);

@@ -28,14 +28,16 @@ public class Teleop extends OpMode{
 
     @Override
     public void loop() {
-        follower.update();
         telemetry.update();
         langskip.driveTrain.updatePosition(telemetry);
 
         follower.setTeleOpMovementVectors(
-                -gamepad1.left_stick_y,
-                -gamepad1.left_stick_x,
-                -gamepad1.right_stick_x); // Robot Centric);
+                gamepad1.left_stick_y,
+                gamepad1.left_stick_x,
+                -gamepad1.right_stick_x,
+                false);
+        follower.update();
+// Robot Centric);
 
         while (gamepad1.a) {
             langskip.driveTrain.aim(telemetry);
