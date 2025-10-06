@@ -1209,16 +1209,11 @@ class Drawing {
      * @param follower Pedro Follower instance.
      */
     public static void drawDebug(Follower follower) {
-        if (follower.getCurrentPathChain() != null && follower.getCurrentPath() != null) {
+        if (follower.getCurrentPath() != null) {
             drawPath(follower.getCurrentPathChain(), robotLook);
             Pose closestPoint = follower.getPointFromPath(follower.getCurrentPath().getClosestPointTValue());
             drawRobot(new Pose(closestPoint.getX(), closestPoint.getY(), follower.getCurrentPath().getHeadingGoal(follower.getCurrentPath().getClosestPointTValue())), robotLook);
-        } else if (follower.getCurrentPath() != null) {
-            drawPath(follower.getCurrentPath(), robotLook);
-            Pose closestPoint = follower.getPointFromPath(follower.getCurrentPath().getClosestPointTValue());
-            drawRobot(new Pose(closestPoint.getX(), closestPoint.getY(), follower.getCurrentPath().getHeadingGoal(follower.getCurrentPath().getClosestPointTValue())), robotLook);
         }
-        
         drawPoseHistory(follower.getPoseHistory(), historyLook);
         drawRobot(follower.getPose(), historyLook);
 
