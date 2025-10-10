@@ -1,10 +1,9 @@
 package org.firstinspires.ftc.teamcode.nordicStorm.subsystems;
 
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.leftFrontMotorName;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.leftRearMotorName;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.rightFrontMotorName;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.rightRearMotorName;
 
+
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.Pose;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -14,10 +13,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
-import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
-import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
-import org.firstinspires.ftc.teamcode.pedroPathing.util.PIDFController;
-import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Constants;
+import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+
+import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants;
 
 import java.util.List;
 
@@ -36,13 +34,12 @@ public class DriveTrain {
     //private final PIDFController limelightRotationController;
 
     public DriveTrain(final HardwareMap hardwareMap) {
-        follower = new Follower(hardwareMap);
+        follower = Constants.createFollower(hardwareMap);
 
-        follower.setStartingPose(new Pose());
-        follower.initialize();
+        //follower.();
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(Constants.aprilTagPipeline);
+        limelight.pipelineSwitch(NordicConstants.aprilTagPipeline);
 
         limelight.start();
 
@@ -68,14 +65,15 @@ public class DriveTrain {
 
             Pose3D botPose = getLLResult().getBotpose();
 
-            position.setX(metersToInches(botPose.getPosition().x));
-            position.setY(metersToInches(botPose.getPosition().y));
+            position.withX(metersToInches(botPose.getPosition().x));
+            position.withY(metersToInches(botPose.getPosition().y));
             position.setHeading(follower.getTotalHeading());
 
             follower.setPose(position);
             follower.update();
         } else {
             telemetry.addLine("Not using April Tags, ll results are not good.");
+            telemetry.addLine("Micah smells");
             follower.update();
             position = follower.getPose();
         }
@@ -111,7 +109,7 @@ public class DriveTrain {
 
             //telemetry.addData("Drive PID", limelightDriveController.getError());
 
-            follower.setTeleOpMovementVectors(-drivePower, 0, rotationPower, false);
+            //follower.setTeleOpMovementVectors(-drivePower, 0, rotationPower, false);
         } else {
             telemetry.addLine("No valid results!");
         }
@@ -126,7 +124,7 @@ public class DriveTrain {
         }
     }
     private double metersToInches(double meters) {
-        return meters * Constants.metersToInches;
+        return meters * NordicConstants.metersToInches;
     }
 
     private LLResult getLLResult() {
