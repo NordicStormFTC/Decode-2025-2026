@@ -2,137 +2,78 @@ package org.firstinspires.ftc.teamcode.nordicStorm.subsystems;
 
 
 
+import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.ftc.FTCCoordinates;
+import com.pedropathing.geometry.PedroCoordinates;
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
-
-import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants;
 
 import java.util.List;
 
-public class DriveTrain {
+public class DriveTrain extends SubsystemBase {
 
 
     public final Follower follower;
 
-    private final Limelight3A limelight;
+    public final Limelight3A limelight;
 
     private LLResult llResult;
+    private final GoBildaPinpointDriver pinpoint;
 
-    private Pose position;
+    private Pose shootingPose;
 
-    //private final PIDFController limelightDriveController;
-    //private final PIDFController limelightRotationController;
+    private TelemetryManager telemetryM;
 
-    public DriveTrain(final HardwareMap hardwareMap) {
+    private NordicConstants.AllianceColor allianceColor;
+
+    public DriveTrain(final HardwareMap hardwareMap, NordicConstants.AllianceColor allianceColor) {
         follower = Constants.createFollower(hardwareMap);
-
-        //follower.();
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        this.allianceColor = allianceColor;
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(NordicConstants.aprilTagPipeline);
+        limelight.pipelineSwitch(0);
 
         limelight.start();
+        shootingPose = allianceColor == NordicConstants.AllianceColor.RED ? NordicConstants.redGoalPose : NordicConstants.blueGoalPose;
 
-        //limelightDriveController = new PIDFController(new CustomPIDFCoefficients(0.03, 0, 0.03, 0.001));
-        //limelightRotationController = new PIDFController(new CustomPIDFCoefficients(0.03, 0, 0.035, 0.001));
-
-        //limelightDriveController.setTargetPosition(-15);
-        //limelightRotationController.setTargetPosition(0);
-
-
-        position = new Pose();
+        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
     }
 
-    public Pose getPosition(final Telemetry telemetry) {
-        updatePosition(telemetry);
-        return follower.getPose();
-    }
 
     public void updatePosition(final Telemetry telemetry) {
+        limelight.updateRobotOrientation(pinpoint.getHeading(AngleUnit.DEGREES));
+    }
 
-        if (llResultsAreGood()) {
-            telemetry.addLine("Using April Tags");
-
-            Pose3D botPose = getLLResult().getBotpose();
-
-            position.withX(metersToInches(botPose.getPosition().x));
-            position.withY(metersToInches(botPose.getPosition().y));
-            position.setHeading(follower.getTotalHeading());
-
-            follower.setPose(position);
-            follower.update();
-        } else {
-            telemetry.addLine("Not using April Tags, ll results are not good.");
-            telemetry.addLine("Micah smells");
-            follower.update();
-            position = follower.getPose();
-        }
+    public double getAngleToGoal(Pose startPose) {
+        Pose position = follower.getPose();
+        double angle = Math.atan((shootingPose.getX() - position.getX())/(shootingPose.getY() - position.getY()));
+        return (Math.PI/2 - angle) + Math.PI;
     }
 
 
-    public void seekBall(final Telemetry telemetry) {
-        if (llResultsAreGood()) {
-            double rotationError = llResult.getTx();
-            double driveError = llResult.getTy();
-
-            //limelightRotationController.updatePosition(rotationError);
-            //limelightDriveController.updatePosition(driveError);
-
-            telemetry.addLine("Seeking");
-            telemetry.addData("Tx", rotationError);
-            telemetry.addData("Ty", driveError);
-
-            double rotationPower = 0;
-            double drivePower = 0;
-
-            /*
-             * if the rotation error is within [-1, 1] we intentionally don't apply power
-             */
-            //if (Math.abs(limelightRotationController.getError()) > 1) {
-             //   rotationPower = limelightRotationController.runPIDF();
-            //}
-
-
-            //if (Math.abs(limelightDriveController.getError()) > 0.5) {
-            //    drivePower = limelightDriveController.runPIDF();
-            //}
-
-            //telemetry.addData("Drive PID", limelightDriveController.getError());
-
-            //follower.setTeleOpMovementVectors(-drivePower, 0, rotationPower, false);
-        } else {
-            telemetry.addLine("No valid results!");
-        }
-        telemetry.update();
-    }
-
-    public void aim(final Telemetry telemetry) {
-        if (llResultsAreGood()) {
-            Pose3D botPose = llResult.getBotpose();
-            List<LLResultTypes.FiducialResult> tags = limelight.getLatestResult().getFiducialResults();
-
-        }
-    }
     private double metersToInches(double meters) {
         return meters * NordicConstants.metersToInches;
     }
 
-    private LLResult getLLResult() {
-        llResult =  limelight.getLatestResult();
-        return llResult;
+    public LLResult getLLResult() {
+        return limelight.getLatestResult();
     }
 
-    private boolean llResultsAreGood() {
+    public boolean llResultsAreGood() {
         return getLLResult() != null && getLLResult().isValid() && getLLResult().getStaleness() < 100;
     }
 }

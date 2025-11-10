@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmode.teleop;
 
+import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Globals.END_OF_AUTO_POSE;
 import static java.lang.System.currentTimeMillis;
 
 import com.arcrobotics.ftclib.command.CommandOpMode;
@@ -21,12 +22,13 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Langskip;
+import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 import java.util.function.Supplier;
 
-@TeleOp(name = "General Teleop")
-public class Teleop extends OpMode {
+@TeleOp(name = "Tournament Teleop")
+public class TournamentTeleop extends OpMode {
     private Follower follower;
 
     private Langskip langskip;
@@ -37,32 +39,23 @@ public class Teleop extends OpMode {
     private boolean slowMode = false;
     private double slowModeMultiplier = 0.5;
 
+    private NordicConstants.AllianceColor allianceColor;
+
 
     @Override
     public void init() {
         langskip = new Langskip(hardwareMap, Globals.ALLIANCE_COLOR);
-        if (langskip.driveTrain.llResultsAreGood()) {
-            double orientation = langskip.driveTrain.getLLResult().getBotpose().getOrientation().getYaw(AngleUnit.DEGREES);
-            startingPose = new Pose(0,0, 6.283/4);
-        }
+        startingPose = Globals.END_OF_AUTO_POSE;
         follower = langskip.getFollower();
-        follower.setStartingPose(startingPose == null ? new Pose(0,0, 6.283/4) : startingPose);
+        follower.setStartingPose(startingPose);
         follower.update();
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
-
-      /*  pathChain = () -> follower.pathBuilder() //Lazy Curve Generation
-                .addPath(new Path(new BezierLine(follower::getPose, new Pose(45, 98))))
-                .setHeadingInterpolation(HeadingInterpolator.linearFromPoint(follower::getHeading, Math.toRadians(45), 0.8))
-                .build(); */
+        allianceColor = Globals.ALLIANCE_COLOR;
     }
 
     @Override
     public void start() {
-        if (langskip.driveTrain.llResultsAreGood()) {
-            double orientation = langskip.driveTrain.getLLResult().getBotpose().getOrientation().getYaw(AngleUnit.DEGREES);
-        }
-
         follower.startTeleopDrive();
     }
 
@@ -79,20 +72,37 @@ public class Teleop extends OpMode {
 
         //This is the normal version to use in the TeleOp
         if (langskip.currentState == Langskip.State.IDLE) {
-            if (!slowMode) follower.setTeleOpDrive(
-                    gamepad1.left_stick_x,
-                    -gamepad1.left_stick_y,
-                    -gamepad1.right_stick_x,
-                    false // Robot Centric
-            );
+            if (allianceColor == NordicConstants.AllianceColor.RED) {
+                if (!slowMode) follower.setTeleOpDrive(
+                        -gamepad1.left_stick_y,
+                        -gamepad1.left_stick_x,
+                        -gamepad1.right_stick_x,
+                        false // Robot Centric
+                );
 
-                //This is how it looks with slowMode on
-            else follower.setTeleOpDrive(
-                    gamepad1.left_stick_x * slowModeMultiplier,
-                    -gamepad1.left_stick_y * slowModeMultiplier,
-                    -gamepad1.right_stick_x * slowModeMultiplier,
-                    false // Robot Centric
-            );
+                    //This is how it looks with slowMode on
+                else follower.setTeleOpDrive(
+                        -gamepad1.left_stick_y * slowModeMultiplier,
+                        -gamepad1.left_stick_x * slowModeMultiplier,
+                        -gamepad1.right_stick_x * slowModeMultiplier,
+                        false // Robot Centric
+                );
+            } else {
+                if (!slowMode) follower.setTeleOpDrive(
+                        gamepad1.left_stick_y,
+                        gamepad1.left_stick_x,
+                        -gamepad1.right_stick_x,
+                        false // Robot Centric
+                );
+
+                    //This is how it looks with slowMode on
+                else follower.setTeleOpDrive(
+                        gamepad1.left_stick_x * slowModeMultiplier,
+                        gamepad1.left_stick_y * slowModeMultiplier,
+                        -gamepad1.right_stick_x * slowModeMultiplier,
+                        false // Robot Centric
+                );
+            }
         }
 
 
@@ -124,7 +134,17 @@ public class Teleop extends OpMode {
             langskip.changeState(Langskip.State.IDLE);
             langskip.intake.runIntake(false);
             follower.startTeleopDrive();
+        }
 
+        if (gamepad1.dpadLeftWasPressed()) {
+            follower.breakFollowing();
+            langskip.changeState(Langskip.State.AIMING);
+        }
+        if (gamepad1.dpadLeftWasReleased()) {
+            follower.breakFollowing();
+            langskip.changeState(Langskip.State.IDLE);
+            langskip.intake.runIntake(false);
+            follower.startTeleopDrive();
         }
 
         if (gamepad1.yWasPressed()) {
@@ -143,11 +163,6 @@ public class Teleop extends OpMode {
             slowMode = !slowMode;
         }
 
-        if (gamepad1.leftBumperWasPressed()) {
-            follower.setPose(new Pose(0,0,6.283/4));
-            follower.update();
-        }
-
         //Optional way to change slow mode strength
         // if (gamepad1.xWasPressed()) {
         //   slowModeMultiplier += 0.1;
@@ -158,6 +173,27 @@ public class Teleop extends OpMode {
             slowModeMultiplier -= 0.1;
         }
 
+        if (gamepad2.leftBumperWasPressed()) {
+            langskip.changeState(Langskip.State.AUTO_PARKING);
+        }
+        if (gamepad2.leftBumperWasReleased()) {
+            follower.breakFollowing();
+            langskip.changeState(Langskip.State.IDLE);
+            follower.startTeleopDrive();
+        }
+
+        if (gamepad2.rightBumperWasPressed()) {
+            follower.breakFollowing();
+            langskip.changeState(Langskip.State.HPINTAKE);
+        }
+
+        if (gamepad2.rightBumperWasReleased()) {
+            follower.breakFollowing();
+            follower.setMaxPower(1);
+            langskip.intake.runIntake(false);
+            langskip.changeState(Langskip.State.IDLE);
+            follower.startTeleopDrive();
+        }
 
         telemetryM.debug("position", follower.getPose());
         telemetryM.debug("velocity", follower.getVelocity());

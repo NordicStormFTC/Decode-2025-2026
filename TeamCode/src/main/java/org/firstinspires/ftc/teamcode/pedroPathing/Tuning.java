@@ -323,7 +323,7 @@ class TurnTuner extends OpMode {
  */
 class ForwardVelocityTuner extends OpMode {
     private final ArrayList<Double> velocities = new ArrayList<>();
-    public static double DISTANCE = 48;
+    public static double DISTANCE = 96;
     public static double RECORD_NUMBER = 10;
 
     private boolean end;
@@ -429,7 +429,7 @@ class ForwardVelocityTuner extends OpMode {
 class LateralVelocityTuner extends OpMode {
     private final ArrayList<Double> velocities = new ArrayList<>();
 
-    public static double DISTANCE = 48;
+    public static double DISTANCE = 96;
     public static double RECORD_NUMBER = 10;
 
     private boolean end;
@@ -1209,11 +1209,16 @@ class Drawing {
      * @param follower Pedro Follower instance.
      */
     public static void drawDebug(Follower follower) {
-        if (follower.getCurrentPath() != null) {
+        if (follower.getCurrentPathChain() != null && follower.getCurrentPath() != null) {
             drawPath(follower.getCurrentPathChain(), robotLook);
             Pose closestPoint = follower.getPointFromPath(follower.getCurrentPath().getClosestPointTValue());
             drawRobot(new Pose(closestPoint.getX(), closestPoint.getY(), follower.getCurrentPath().getHeadingGoal(follower.getCurrentPath().getClosestPointTValue())), robotLook);
+        } else if (follower.getCurrentPath() != null) {
+            drawPath(follower.getCurrentPath(), robotLook);
+            Pose closestPoint = follower.getPointFromPath(follower.getCurrentPath().getClosestPointTValue());
+            drawRobot(new Pose(closestPoint.getX(), closestPoint.getY(), follower.getCurrentPath().getHeadingGoal(follower.getCurrentPath().getClosestPointTValue())), robotLook);
         }
+
         drawPoseHistory(follower.getPoseHistory(), historyLook);
         drawRobot(follower.getPose(), historyLook);
 
