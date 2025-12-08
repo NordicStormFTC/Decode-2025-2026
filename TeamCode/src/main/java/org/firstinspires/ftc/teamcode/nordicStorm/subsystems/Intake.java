@@ -2,18 +2,18 @@ package org.firstinspires.ftc.teamcode.nordicStorm.subsystems;
 
 
 import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.intakeMotorName;
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.pixyName;
 
-import com.arcrobotics.ftclib.command.Subsystem;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.nordicStorm.pixy.Pixy;
 
+/**
+ * Intake subsystem.
+ * Contains one motor that runs the intake wheel.
+ * Public methods allow for running the intake inwards and outwards,
+ * as well as checking if the intake is currently running.
+ */
 public class Intake extends SubsystemBase {
 
 
@@ -35,7 +35,12 @@ public class Intake extends SubsystemBase {
         } else {
             intakeMotor.setPower(0);
         }
-        isRunning = !isRunning;
+        isRunning = doRun;
+    }
+
+    public void runIntakeSlow() {
+        isRunning = true;
+        intakeMotor.setPower(-.75);
     }
 
     public void runIntakeReverse(boolean doRun){
@@ -44,6 +49,6 @@ public class Intake extends SubsystemBase {
         } else {
             intakeMotor.setPower(0);
         }
-        isRunning = !isRunning;
+        isRunning = doRun;
     }
 }

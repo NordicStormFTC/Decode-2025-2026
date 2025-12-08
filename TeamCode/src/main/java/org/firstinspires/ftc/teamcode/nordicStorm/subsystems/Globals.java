@@ -18,17 +18,17 @@ public class Globals {
         UNKNOWN
     }
 
+    // This holds the robot position at the end of auto so Teleop knows where we start.
     @IgnoreConfigurable
     public static Pose END_OF_AUTO_POSE = new Pose(96, 9.5, Math.toRadians(90));
 
+    @IgnoreConfigurable
+    public static Map<Integer, Pose[]> pickupOrder = new HashMap<>(); // Stores the order of ball Pickup and the before/after pickup poses.
+
+    // These are all configurable parameters for our autos.
     public static boolean endingObeliskSide = true;
     public static boolean shootingClose = true;
     public static boolean startingObeliskSide = true;
-
-
-
-    @IgnoreConfigurable
-    public static Map<Integer, Pose[]> pickupOrder = new HashMap<>(); // Stores the order of ball Pickup and the before/after pickup poses.
 
     public static int PPGPriority = 0;
     public static int PGPPriority = 1;
@@ -41,6 +41,13 @@ public class Globals {
     public static boolean findMotifTag = false;
     public static boolean shootFourTimes = false;
 
+    // IMPORTANT: This needs to be set at the beginning of every match
     public static NordicConstants.AllianceColor ALLIANCE_COLOR = NordicConstants.AllianceColor.RED;
+
+    // Shooter PID values
+    public static double shooterP = .1;
+    public static double shooterD = 0;
+    public static double shooterI = 1.2;
+    public static double shooterFeedForwards = .0001;
 
 }

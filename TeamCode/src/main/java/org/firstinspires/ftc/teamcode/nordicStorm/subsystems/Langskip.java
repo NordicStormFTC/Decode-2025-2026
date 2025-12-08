@@ -1,31 +1,24 @@
 package org.firstinspires.ftc.teamcode.nordicStorm.subsystems;
 
 import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.pixyCenterXPixel;
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.pixyName;
 import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.signalLightName;
 
 import static java.lang.System.currentTimeMillis;
 
 import androidx.annotation.NonNull;
 
-import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.BezierPoint;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
-import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.teamcode.nordicStorm.pixy.Pixy;
-import org.firstinspires.ftc.teamcode.nordicStorm.pixy.PixyBlock;
 import org.firstinspires.ftc.teamcode.nordicStorm.pixy.PixyHelper;
 
 
@@ -42,7 +35,6 @@ public class Langskip {
     public final InnerSubsystem innerSubsystem;
 
 
-    private final Pixy pixy;
     private final Limelight3A limelight;
     private final Servo signalLight;
     private final PixyHelper pixyHelper = new PixyHelper(5);
@@ -68,6 +60,8 @@ public class Langskip {
 
     private double chargeTime = Integer.MAX_VALUE;
 
+    private final Pose shootingPose;
+
 
     /**
      * @param hardwareMap the hardware map for our subsystems to use. This provides the same instance of the hardware map to all subsystems
@@ -80,14 +74,13 @@ public class Langskip {
 
         signalLight = hardwareMap.get(Servo.class, signalLightName);
         limelight = driveTrain.limelight;
-        pixy = hardwareMap.get(Pixy.class, pixyName);
-        pixy.turnOnLamps();
         follower = driveTrain.follower;
 
         this.allianceColor = allianceColor;
+        shootingPose = allianceColor == NordicConstants.AllianceColor.RED ? NordicConstants.redGoalPose : NordicConstants.blueGoalPose;
 
-        beforeHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(106, 10, Math.toRadians(180)) : new Pose(38, 10, Math.toRadians(0));
-        afterHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(132, 10, Math.toRadians(180)) : new Pose(12, 10, Math.toRadians(0));
+        beforeHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(106, 12, Math.toRadians(180)) : new Pose(38, 12, Math.toRadians(0));
+        afterHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(132, 12, Math.toRadians(180)) : new Pose(12, 12, Math.toRadians(0));
     }
 
     public Follower getFollower() {
@@ -103,14 +96,18 @@ public class Langskip {
     }
 
     public void periodic(Telemetry telemetry) {
+        driveTrain.updatePosition();
+        double shootDistance = Math.sqrt(Math.pow(follower.getPose().getX() - shootingPose.getX(), 2) + Math.pow(follower.getPose().getY() - shootingPose.getY(), 2));
+        telemetry.addData("Shooting distance: ", shootDistance);
 
-        // ----- Retrieve and update Pixy information -----
-        PixyBlock ball = pixy.getBlock();
-        pixyHelper.update(ball);
-        telemetry.addData("Pixy Reading", pixyHelper.getData());
-        telemetry.addData("Light State: ", signalLight.getPosition());
-        telemetry.addData("Follower Pose: ", follower.getPose());
+        innerSubsystem.periodic(telemetry, shootDistance);
+        //innerSubsystem.periodic(telemetry, sRPM);
+
+
+        // ----- Retrieve and update Robot information -----
+
         telemetry.addData("Is busy: ", follower.isBusy());
+        telemetry.addData("Follower Pose: ", follower.getPose());
 
         if (limelight.getLatestResult() != null && limelight.getLatestResult().isValid()) {
             for (LLResultTypes.FiducialResult detection : limelight.getLatestResult().getFiducialResults()) {
@@ -125,22 +122,11 @@ public class Langskip {
 
                     Pose pedroPose = new Pose(pedroX, pedroY, follower.getHeading());
 
-                    telemetry.addData("Limelight Pose Estimation: ", pedroPose);
-                    continue;
+                    //telemetry.addData("Limelight Pose Estimation: ", pedroPose);
                 }
             }
         }
 
-
-        //
-        driveTrain.updatePosition(telemetry);
-        /*if (pixyHelper.seesBall() && signalLight.getPosition() != .5) {
-            signalLight.setPosition(.5);
-        } else if (currentState == State.BALL_SEARCHING && signalLight.getPosition() != .625) {
-            signalLight.setPosition(.625);
-        } else if (signalLight.getPosition() != .25) {
-            signalLight.setPosition(.25);
-        } */
         if (driveTrain.llResultsAreGood() && signalLight.getPosition() != .5) {
             signalLight.setPosition(.5);
         } else if (signalLight.getPosition() != .25) {
@@ -197,34 +183,36 @@ public class Langskip {
                     BezierPoint finalPose = new BezierPoint(new Pose(currentPose.getX() - Math.cos(ballAngle) * (-distance), currentPose.getY() - Math.sin(ballAngle) * (-distance), currentPose.getHeading()));
                     follower.holdPoint(finalPose, currentPose.getHeading(), false);
                 }
-
                 break;
             case HPINTAKE:
                 if (!follower.isBusy()) {
-                    PathChain HPIntake = follower.pathBuilder()
+                    follower.holdPoint(new BezierPoint(beforeHPIntake.getX(), beforeHPIntake.getY()), beforeHPIntake.getHeading());
+                    /*PathChain HPIntake = follower.pathBuilder()
                             .addPath(new BezierLine(follower.getPose(), beforeHPIntake))
-                            .setLinearHeadingInterpolation(follower.getHeading(), beforeHPIntake.getHeading())
+                            .setLinearHeadingInterpolation(follower.getHeading(), beforeHPIntake.getHeading(), .75)
                             .addParametricCallback(.9, () -> follower.setMaxPower(.29))
                             .addPath(new BezierLine(beforeHPIntake, afterHPIntake))
-                            .setLinearHeadingInterpolation(beforeHPIntake.getHeading(), afterHPIntake.getHeading())
                             .addParametricCallback(.01, () -> intake.runIntake(true))
                             .addParametricCallback(.99, () -> intake.runIntake(false))
                             .addParametricCallback(.99, () -> follower.setMaxPower(1))
+                            .setLinearHeadingInterpolation(beforeHPIntake.getHeading(), afterHPIntake.getHeading(), .75)
                             .build();
-                    follower.followPath(HPIntake);
+                    follower.followPath(HPIntake); */
                 }
                 break;
             case AIMING:
-                double angleToGoal = driveTrain.getAngleToGoal(follower.getPose());
-                telemetry.addData("Angle to goal: ", angleToGoal);
+                double angleToGoal = driveTrain.getAngleToGoal();
                 telemetry.addData("Angle to goal degrees: ", Math.toDegrees(angleToGoal));
+                telemetry.addData("Heading: ", Math.toDegrees(follower.getHeading()));
+
                 follower.turnTo(angleToGoal);
+
                 if (Math.abs(follower.getHeading()-angleToGoal) < .1 || (Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2*Math.PI < .05) && Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI > 0) {
                     currentState = State.SHOOTING;
                 }
                 break;
             case SHOOTING:
-                intake.runIntake(true);
+                this.innerSubsystem.setShooting(true);
                 break;
             case AUTO_PARKING:
                 if (allianceColor == NordicConstants.AllianceColor.BLUE) {
