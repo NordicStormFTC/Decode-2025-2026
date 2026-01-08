@@ -30,7 +30,6 @@ import org.firstinspires.ftc.teamcode.nordicStorm.pixy.PixyHelper;
  */
 public class Langskip {
 
-    public final Intake intake;
     public final DriveTrain driveTrain;
     public final InnerSubsystem innerSubsystem;
 
@@ -67,17 +66,16 @@ public class Langskip {
      * @param hardwareMap the hardware map for our subsystems to use. This provides the same instance of the hardware map to all subsystems
      */
     public Langskip(@NonNull final HardwareMap hardwareMap, NordicConstants.AllianceColor allianceColor) {
-
-        intake = new Intake(hardwareMap);
         driveTrain = new DriveTrain(hardwareMap, allianceColor);
         innerSubsystem = new InnerSubsystem(hardwareMap);
 
         signalLight = hardwareMap.get(Servo.class, signalLightName);
-        //limelight = driveTrain.limelight;
+        setSignalColor(.333);
         follower = driveTrain.follower;
 
         this.allianceColor = allianceColor;
         shootingPose = allianceColor == NordicConstants.AllianceColor.RED ? NordicConstants.redGoalPose : NordicConstants.blueGoalPose;
+
 
         beforeHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(106, 12, Math.toRadians(180)) : new Pose(38, 12, Math.toRadians(0));
         afterHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(132, 12, Math.toRadians(180)) : new Pose(12, 12, Math.toRadians(0));
@@ -96,7 +94,6 @@ public class Langskip {
     }
 
     public void periodic(Telemetry telemetry) {
-        //driveTrain.updatePosition();
         double shootDistance = Math.sqrt(Math.pow(follower.getPose().getX() - shootingPose.getX(), 2) + Math.pow(follower.getPose().getY() - shootingPose.getY(), 2));
         telemetry.addData("Shooting distance: ", shootDistance);
 
@@ -108,30 +105,6 @@ public class Langskip {
 
         telemetry.addData("Is busy: ", follower.isBusy());
         telemetry.addData("Follower Pose: ", follower.getPose());
-
-        /*if (limelight.getLatestResult() != null && limelight.getLatestResult().isValid()) {
-            for (LLResultTypes.FiducialResult detection : limelight.getLatestResult().getFiducialResults()) {
-                if (detection.getFiducialId() == 20 || detection.getFiducialId() == 24) {
-
-                    LLResult llResult = limelight.getLatestResult();
-                    Pose3D botPose = llResult.getBotpose();
-
-                    Position position = botPose.getPosition();
-                    double pedroY = position.x * NordicConstants.metersToInches * -1 + 72;
-                    double pedroX = position.y * NordicConstants.metersToInches + 72;
-
-                    Pose pedroPose = new Pose(pedroX, pedroY, follower.getHeading());
-
-                    //telemetry.addData("Limelight Pose Estimation: ", pedroPose);
-                }
-            }
-        } */
-
-        if (signalLight.getPosition() != .5) {
-            signalLight.setPosition(.5);
-        } else if (signalLight.getPosition() != .25) {
-            signalLight.setPosition(.25);
-        }
 
         switch (currentState) {
             case BALL_SEARCHING:
@@ -147,7 +120,7 @@ public class Langskip {
                 if (!pixyHelper.seesBall()) {
                     currentState = State.BALL_SEARCHING;
                 } else {
-                    intake.runIntake(true);
+                    innerSubsystem.setIntake(true);
                     double xPixelOffset = pixyHelper.getWeightedX() - pixyCenterXPixel;
                     Pose currentPose = follower.getPose();
                     double distance = 1265 / Math.sqrt(pixyHelper.getWeightedArea());
@@ -207,7 +180,7 @@ public class Langskip {
 
                 follower.turnTo(angleToGoal);
 
-                if (Math.abs(follower.getHeading()-angleToGoal) < .1 || (Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2*Math.PI < .05) && Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI > 0) {
+                if (Math.abs(follower.getHeading() - angleToGoal) < .1 || (Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI < .05) && Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI > 0) {
                     currentState = State.SHOOTING;
                 }
                 break;

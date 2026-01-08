@@ -56,7 +56,6 @@ public class Auto extends OpMode {
         opmodeTimer.resetTimer();
 
         langskip = new Langskip(hardwareMap, Globals.ALLIANCE_COLOR);
-        limelight = langskip.driveTrain.limelight;
         follower = langskip.getFollower();
 
 
@@ -95,7 +94,7 @@ public class Auto extends OpMode {
                 paths[1] = grabBallPath(ARTIFACT_POSES[0], ARTIFACT_POSES[3]); // Grab PPG starting at ScorePose
                 paths[2] = grabBallPath(ARTIFACT_POSES[1], ARTIFACT_POSES[4]); // Grab PGP starting at ScorePose
                 paths[3] = grabBallPath(ARTIFACT_POSES[2], ARTIFACT_POSES[5]); // Grab GPP starting at ScorePose
-               break;
+                break;
             case PGP_TAG_ID:
                 // Set paths for PGP
                 paths[1] = grabBallPath(ARTIFACT_POSES[1], ARTIFACT_POSES[2]); // Grab PGP starting at ScorePose
@@ -117,11 +116,11 @@ public class Auto extends OpMode {
                 .addParametricCallback(.8, () -> follower.setMaxPower(.6))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), beforeBall.getHeading())
                 .addPath(new BezierLine(beforeBall, afterBall))
-                .addParametricCallback(.01, () -> langskip.intake.runIntake(true))
+                .addParametricCallback(.01, () -> langskip.innerSubsystem.setIntake(true))
                 .addParametricCallback(.01, () -> follower.setMaxPower(.2))
                 .setLinearHeadingInterpolation(beforeBall.getHeading(), afterBall.getHeading())
                 .addPath(new BezierLine(afterBall, scorePose))
-                .addParametricCallback(.2, () -> langskip.intake.runIntake(false))
+                .addParametricCallback(.2, () -> langskip.innerSubsystem.setIntake(false))
                 .addParametricCallback(.01, () -> follower.setMaxPower(1))
                 .setLinearHeadingInterpolation(afterBall.getHeading(), scorePose.getHeading())
                 .build();

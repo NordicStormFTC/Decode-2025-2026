@@ -42,6 +42,11 @@ public class TournamentTeleop extends OpMode {
     @Override
     public void start() {
         follower.startTeleopDrive();
+        if (allianceColor == NordicConstants.AllianceColor.BLUE) {
+            langskip.setSignalColor(.611);
+        } else {
+            langskip.setSignalColor(.277);
+        }
     }
 
 
@@ -98,12 +103,12 @@ public class TournamentTeleop extends OpMode {
 
 
         // Right Trigger = Intake
-        if (gamepad1.right_trigger > .5 && !langskip.intake.isRunning()) {
-            langskip.intake.runIntake(true);
+        if (gamepad1.right_trigger > .5) {
+            langskip.innerSubsystem.setIntake(true);
         }
 
-        if (gamepad1.right_trigger < .1 && langskip.intake.isRunning() && langskip.currentState == Langskip.State.IDLE) {
-            langskip.intake.runIntake(false);
+        if (gamepad1.right_trigger < .1 && langskip.currentState == Langskip.State.IDLE) {
+            langskip.innerSubsystem.setIntake(false);
         }
 
         // Right DPad = Move flipper up
@@ -128,7 +133,6 @@ public class TournamentTeleop extends OpMode {
 
         // Y = Shooting
         if (gamepad1.yWasPressed()) {
-            langskip.intake.runIntakeSlow();
             langskip.changeState(Langskip.State.AIMING);
         }
         if (gamepad1.yWasReleased()) {
@@ -155,7 +159,7 @@ public class TournamentTeleop extends OpMode {
 
         if (gamepad1.rightBumperWasReleased()) {
             follower.setMaxPower(1);
-            langskip.intake.runIntake(false);
+            langskip.innerSubsystem.setIntake(false);
             langskip.changeState(Langskip.State.IDLE);
             follower.startTeleopDrive();
         }

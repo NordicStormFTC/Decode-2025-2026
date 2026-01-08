@@ -3,7 +3,8 @@ package org.firstinspires.ftc.teamcode.nordicStorm.subsystems;
 import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Globals.shooterD;
 import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Globals.shooterFeedForwards;
 import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Globals.shooterI;
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.flipperServoName;
+import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.leftElevatorName;
+import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.rightElevatorName;
 import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.shootingMotorName;
 
 import com.bylazar.configurables.annotations.Configurable;
@@ -24,9 +25,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class InnerSubsystem {
     @IgnoreConfigurable
     private final DcMotorEx shootingMotor;
-    private final Servo flipperServo;
+    private final Servo leftElevator, rightElevator;
     private final Rev2mDistanceSensor distance1, distance2;
     private boolean shooting = false;
+    private boolean intaking = false;
     private final PIDFController shooterPID;
     private boolean override = false;
     private final Timer atRPMsince = new Timer();
@@ -40,39 +42,47 @@ public class InnerSubsystem {
         distance1 = hardwareMap.get(Rev2mDistanceSensor.class, "d1");
         distance2 = hardwareMap.get(Rev2mDistanceSensor.class, "d2");
 
-
-        flipperServo = hardwareMap.get(Servo.class, flipperServoName);
-        flipperServo.setPosition(.35);
+        rightElevator = hardwareMap.get(Servo.class, rightElevatorName);
+        leftElevator = hardwareMap.get(Servo.class, leftElevatorName);
+        rightElevator.setPosition(.35); // TODO
+        leftElevator.setPosition(.35);
         shooterPID = new PIDFController(new PIDFCoefficients(Globals.shooterP, shooterI, shooterD, shooterFeedForwards));
     }
 
     public void periodic(Telemetry telemetry, double distance) {
-        double targetRPM;
-        if (shooting) {
-            targetRPM = findRPMFromDistance(distance);
-        } else {
-            shootingSince.resetTimer();
-            targetRPM = 0;
-        }
-
-        shooterPID.updateError((targetRPM - getRPM()));
-        setRPM(shooterPID.run());
-        telemetry.addData("RPM: ", getRPM());
-        telemetry.addData("Target RPM: ", targetRPM);
-        telemetry.addData("Ball Distance: ", getDistance());
-
-
-        if (Math.abs(targetRPM - getRPM()) < 100 && shooting) {
-            if (flipperIsDown() && waitedSinceLastShot() && getDistance() < 70 && nonOscillatingRPM() && rampingTimeIsGood()) {
-                moveFlipperUp();
-                timeSinceShot.resetTimer();
+        // This defaults to not running the motor at all.
+        if (intaking) {
+            if (Math.abs(getRPM()) < 500) {
+                shootingMotor.setPower(-.5);
             }
         } else {
-            atRPMsince.resetTimer();
-        }
-        if (timeSinceShot.getElapsedTimeSeconds() > .35 && flipperServo.getPosition() != .35) {
-            if (!override) {
-                moveFlipperDown();
+            double targetRPM;
+            if (shooting) {
+                targetRPM = findRPMFromDistance(distance);
+            } else {
+                shootingSince.resetTimer();
+                targetRPM = 0;
+            }
+
+            shooterPID.updateError((targetRPM - getRPM()));
+            setRPM(shooterPID.run());
+            telemetry.addData("RPM: ", getRPM());
+            telemetry.addData("Target RPM: ", targetRPM);
+            telemetry.addData("Ball Distance: ", getDistance());
+
+
+            if (Math.abs(targetRPM - getRPM()) < 100 && shooting) {
+                if (flipperIsDown() && waitedSinceLastShot() && getDistance() < 70 && nonOscillatingRPM() && rampingTimeIsGood()) {
+                    moveFlipperUp();
+                    timeSinceShot.resetTimer();
+                }
+            } else {
+                atRPMsince.resetTimer();
+            }
+            if (timeSinceShot.getElapsedTimeSeconds() > .35 && !elevatorAt(.35)) {
+                if (!override) {
+                    moveFlipperDown();
+                }
             }
         }
     }
@@ -82,7 +92,7 @@ public class InnerSubsystem {
     }
 
     private boolean flipperIsDown() {
-        return flipperServo.getPosition() != .75;
+        return !elevatorAt(.75);
     }
 
     private boolean nonOscillatingRPM() {
@@ -101,34 +111,42 @@ public class InnerSubsystem {
         return shootingMotor.getVelocity() / 28 * 60;
     }
 
-    public double getFlipperPose() {
-        return flipperServo.getPosition();
-    }
-
     public void setOverride(boolean b) {
         override = b;
     }
 
+    private boolean elevatorAt(double pos) {
+        return rightElevator.getPosition() == pos && leftElevator.getPosition() == pos;
+    }
+
     public void moveFlipperDown() {
-        flipperServo.setPosition(.35);
+        rightElevator.setPosition(.35); //TODO
+        leftElevator.setPosition(.35);
     }
 
     public void moveFlipperUp() {
-        flipperServo.setPosition(.75);
-    }
-
-    public void moveFlipperToPoint(double point) {
-        flipperServo.setPosition(point);
+        rightElevator.setPosition(.75); //TODO
+        leftElevator.setPosition(.75);
     }
 
     public double findRPMFromDistance(double distance) {
-        return -(-0.002267*distance*distance*distance+0.6989*distance*distance-61.34*distance+6341.27)+100;
+        return -(-0.002267 * distance * distance * distance + 0.6989 * distance * distance - 61.34 * distance + 6341.27) + 100;
         //return -(0.1270 * distance * distance - 14.4090 * distance + 5092.8328);
         //return -1.31E+09 + 1.68E+08*distance  -9.63E+06*Math.pow(distance, 2) + 325631*Math.pow(distance, 3) - -7185*Math.pow(distance, 4) + 108*Math.pow(distance, 5) -1.12*Math.pow(distance, 6) + 7.95E-03*Math.pow(distance, 7) -3.67E-05*Math.pow(distance, 8) + 9.99E-08*Math.pow(distance, 9) -1.22E-10*Math.pow(distance, 10);
     }
 
     public void setShooting(boolean doShoot) {
+        if (doShoot) {
+            setIntake(false);
+        }
         shooting = doShoot;
+    }
+
+    public void setIntake(boolean doIntake) {
+        if (doIntake) {
+            setShooting(false);
+        }
+        intaking = doIntake;
     }
 
     private double getDistance() {

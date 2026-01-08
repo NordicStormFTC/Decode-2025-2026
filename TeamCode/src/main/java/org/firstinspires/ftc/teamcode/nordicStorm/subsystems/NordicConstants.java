@@ -9,7 +9,8 @@ public class NordicConstants {
     // All names for the non-drivetrain hardware.
     public static final String intakeMotorName = "intake";
     public static final String shootingMotorName = "shiitee";
-    public static final String flipperServoName = "flipper";
+    public static final String rightElevatorName = "right lift";
+    public static final String leftElevatorName = "left lift";
     public static final String signalLightName = "light";
     public static final int pixyCenterXPixel = 125; //158
 
