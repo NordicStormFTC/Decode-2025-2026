@@ -25,7 +25,7 @@ public class DriveTrain extends SubsystemBase {
 
     public final Follower follower;
 
-    public final Limelight3A limelight;
+    //public final Limelight3A limelight;
 
     private final GoBildaPinpointDriver pinpoint;
 
@@ -37,16 +37,16 @@ public class DriveTrain extends SubsystemBase {
         follower = Constants.createFollower(hardwareMap);
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(0);
+        //limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        //limelight.pipelineSwitch(0);
 
-        limelight.start();
+        //limelight.start();
         shootingPose = allianceColor == NordicConstants.AllianceColor.RED ? NordicConstants.redGoalPose : NordicConstants.blueGoalPose;
     }
 
-    public void updatePosition() {
+    /*public void updatePosition() {
         limelight.updateRobotOrientation(pinpoint.getHeading(AngleUnit.DEGREES));
-    }
+    } */
 
     /**
      * Find the angle the robot needs to face the goal.
@@ -62,11 +62,12 @@ public class DriveTrain extends SubsystemBase {
         return meters * NordicConstants.metersToInches;
     }
 
+    /*
     public LLResult getLLResult() {
         return limelight.getLatestResult();
-    }
+    } */
 
-    public boolean llResultsAreGood() {
+    /*public boolean llResultsAreGood() {
         return getLLResult() != null && getLLResult().isValid() && getLLResult().getStaleness() < 100;
-    }
+    } */
 }

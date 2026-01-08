@@ -33,7 +33,7 @@ public class SelectableAuto extends OpMode {
     // Declare essential variables for path following, timers, and hardware.
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
-    private Limelight3A limelight;
+    //private Limelight3A limelight;
     private Langskip langskip;
 
     private int stateHolder = 0;
@@ -78,8 +78,8 @@ public class SelectableAuto extends OpMode {
 
         // Initialize an instance of the robot (all subsystems) and the limelight
         langskip = new Langskip(hardwareMap, Globals.ALLIANCE_COLOR);
-        limelight = langskip.driveTrain.limelight;
-        limelight.pipelineSwitch(0); // AprilTag pipeline
+        //limelight = langskip.driveTrain.limelight;
+        //limelight.pipelineSwitch(0); // AprilTag pipeline
         follower = langskip.getFollower();
 
         // If the alliance color is red, flip all poses to match the red field layout.
@@ -384,7 +384,7 @@ public class SelectableAuto extends OpMode {
     public void loop() {
 
         // Look through limelight data to determine what tag ID we see.
-        if (limelight.getLatestResult() != null && limelight.getLatestResult().isValid()) {
+        /*if (limelight.getLatestResult() != null && limelight.getLatestResult().isValid()) {
             for (LLResultTypes.FiducialResult detection : limelight.getLatestResult().getFiducialResults()) {
                 // If we see the red or blue goal tags, localize off of limelight data
                 if (detection.getFiducialId() == 20 || detection.getFiducialId() == 24) {
@@ -404,7 +404,7 @@ public class SelectableAuto extends OpMode {
                     //buildPathsFromTag();
                 }
             }
-        }
+        }*/
 
         // Update follower and path states. Required to move the robot.
         follower.update();
@@ -415,7 +415,9 @@ public class SelectableAuto extends OpMode {
         telemetry.addData("Tag ID: ", sawTagNumber);
         telemetry.addData("Action Timer: ", actionTimer.getElapsedTimeSeconds());
         telemetry.update();
-        if (opmodeTimer.getElapsedTimeSeconds() > 28) { // If we are not outside of the starting zone at the end of auto, force it to leave.
+
+        // If we are not outside of the starting zone at the end of auto, force it to leave.
+        if (opmodeTimer.getElapsedTimeSeconds() > 28) {
             follower.breakFollowing();
             setPathState(99);
             opmodeTimer.resetTimer();

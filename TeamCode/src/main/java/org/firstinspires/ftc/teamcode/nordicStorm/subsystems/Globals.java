@@ -45,9 +45,13 @@ public class Globals {
     public static NordicConstants.AllianceColor ALLIANCE_COLOR = NordicConstants.AllianceColor.RED;
 
     // Shooter PID values
+    @IgnoreConfigurable
     public static double shooterP = .1;
+    @IgnoreConfigurable
     public static double shooterD = 0;
+    @IgnoreConfigurable
     public static double shooterI = 1.2;
+    @IgnoreConfigurable
     public static double shooterFeedForwards = .0001;
 
 }

@@ -47,7 +47,6 @@ public class InnerSubsystem {
     }
 
     public void periodic(Telemetry telemetry, double distance) {
-        double ballDistance = getDistance();
         double targetRPM;
         if (shooting) {
             targetRPM = findRPMFromDistance(distance);
@@ -60,11 +59,11 @@ public class InnerSubsystem {
         setRPM(shooterPID.run());
         telemetry.addData("RPM: ", getRPM());
         telemetry.addData("Target RPM: ", targetRPM);
-        telemetry.addData("Ball Distance: ", ballDistance);
+        telemetry.addData("Ball Distance: ", getDistance());
 
 
         if (Math.abs(targetRPM - getRPM()) < 100 && shooting) {
-            if (flipperIsDown() && waitedSinceLastShot() && ballDistance < 60 && nonOscillatingRPM() && rampingTimeIsGood()) {
+            if (flipperIsDown() && waitedSinceLastShot() && getDistance() < 70 && nonOscillatingRPM() && rampingTimeIsGood()) {
                 moveFlipperUp();
                 timeSinceShot.resetTimer();
             }

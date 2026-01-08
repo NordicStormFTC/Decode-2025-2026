@@ -35,7 +35,7 @@ public class Langskip {
     public final InnerSubsystem innerSubsystem;
 
 
-    private final Limelight3A limelight;
+    //private final Limelight3A limelight;
     private final Servo signalLight;
     private final PixyHelper pixyHelper = new PixyHelper(5);
 
@@ -73,7 +73,7 @@ public class Langskip {
         innerSubsystem = new InnerSubsystem(hardwareMap);
 
         signalLight = hardwareMap.get(Servo.class, signalLightName);
-        limelight = driveTrain.limelight;
+        //limelight = driveTrain.limelight;
         follower = driveTrain.follower;
 
         this.allianceColor = allianceColor;
@@ -96,7 +96,7 @@ public class Langskip {
     }
 
     public void periodic(Telemetry telemetry) {
-        driveTrain.updatePosition();
+        //driveTrain.updatePosition();
         double shootDistance = Math.sqrt(Math.pow(follower.getPose().getX() - shootingPose.getX(), 2) + Math.pow(follower.getPose().getY() - shootingPose.getY(), 2));
         telemetry.addData("Shooting distance: ", shootDistance);
 
@@ -109,7 +109,7 @@ public class Langskip {
         telemetry.addData("Is busy: ", follower.isBusy());
         telemetry.addData("Follower Pose: ", follower.getPose());
 
-        if (limelight.getLatestResult() != null && limelight.getLatestResult().isValid()) {
+        /*if (limelight.getLatestResult() != null && limelight.getLatestResult().isValid()) {
             for (LLResultTypes.FiducialResult detection : limelight.getLatestResult().getFiducialResults()) {
                 if (detection.getFiducialId() == 20 || detection.getFiducialId() == 24) {
 
@@ -125,9 +125,9 @@ public class Langskip {
                     //telemetry.addData("Limelight Pose Estimation: ", pedroPose);
                 }
             }
-        }
+        } */
 
-        if (driveTrain.llResultsAreGood() && signalLight.getPosition() != .5) {
+        if (signalLight.getPosition() != .5) {
             signalLight.setPosition(.5);
         } else if (signalLight.getPosition() != .25) {
             signalLight.setPosition(.25);
