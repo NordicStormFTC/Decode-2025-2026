@@ -24,6 +24,8 @@ public class TournamentTeleop extends OpMode {
     private boolean slowMode = true;
     private final double slowModeMultiplier = .65;
 
+    public int a = 3000;
+
     private NordicConstants.AllianceColor allianceColor;
 
 
@@ -42,11 +44,12 @@ public class TournamentTeleop extends OpMode {
     @Override
     public void start() {
         follower.startTeleopDrive();
-        if (allianceColor == NordicConstants.AllianceColor.BLUE) {
+        langskip.signalLight.setPosition(.277);
+        /*if (allianceColor == NordicConstants.AllianceColor.BLUE) {
             langskip.setSignalColor(.611);
         } else {
             langskip.setSignalColor(.277);
-        }
+        } */
     }
 
 
@@ -58,7 +61,7 @@ public class TournamentTeleop extends OpMode {
         langskip.periodic(telemetry);
         telemetry.addData("Langskip state:", langskip.currentState);
         telemetry.addData("Heading Error: ", follower.getHeadingError());
-
+        telemetry.addData("Intake: ", a);
 
         if (langskip.currentState == Langskip.State.IDLE) {
             if (allianceColor == NordicConstants.AllianceColor.RED) {
@@ -103,12 +106,12 @@ public class TournamentTeleop extends OpMode {
 
 
         // Right Trigger = Intake
-        if (gamepad1.right_trigger > .5) {
-            langskip.innerSubsystem.setIntake(true);
+        if (gamepad1.right_trigger > .5 && !langskip.intake.isRunning()) {
+            langskip.intake.runIntake(true);
         }
 
-        if (gamepad1.right_trigger < .1 && langskip.currentState == Langskip.State.IDLE) {
-            langskip.innerSubsystem.setIntake(false);
+        if (gamepad1.right_trigger < .1 && langskip.currentState == Langskip.State.IDLE && langskip.intake.isRunning()) {
+            langskip.intake.runIntake(false);
         }
 
         // Right DPad = Move flipper up
@@ -122,22 +125,38 @@ public class TournamentTeleop extends OpMode {
             langskip.innerSubsystem.moveFlipperDown();
         }
 
+
         //Slow Mode
-        if (gamepad1.dpadLeftWasPressed()) {
+        /*if (gamepad1.dpadLeftWasPressed()) {
             slowMode = !slowMode;
         }
 
         if (gamepad1.dpadDownWasPressed()) {
             follower.setPose(new Pose(72, 72, Math.toRadians(90)));
+        } */
+
+        if (gamepad1.dpadDownWasPressed()) {
+            langskip.setSignalColor(.277);
+            a -= 50;
+        }
+
+        if (gamepad1.dpadUpWasPressed()) {
+            a += 50;
+        }
+
+        if (gamepad1.dpadLeftWasPressed()) {
+            langskip.innerSubsystem.setIntakeSpped(a);
         }
 
         // Y = Shooting
         if (gamepad1.yWasPressed()) {
-            langskip.changeState(Langskip.State.AIMING);
+            langskip.changeState(Langskip.State.SHOOTING);
+            langskip.intake.runIntakeSlow();
         }
         if (gamepad1.yWasReleased()) {
             langskip.changeState(Langskip.State.IDLE);
             langskip.innerSubsystem.setShooting(false);
+            langskip.intake.runIntake(false);
             follower.startTeleopDrive();
         }
 
@@ -159,7 +178,7 @@ public class TournamentTeleop extends OpMode {
 
         if (gamepad1.rightBumperWasReleased()) {
             follower.setMaxPower(1);
-            langskip.innerSubsystem.setIntake(false);
+            langskip.intake.runIntake(false);
             langskip.changeState(Langskip.State.IDLE);
             follower.startTeleopDrive();
         }

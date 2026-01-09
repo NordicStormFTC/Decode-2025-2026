@@ -7,7 +7,6 @@ public class NordicConstants {
     public static final double metersToInches = 39.3701;
 
     // All names for the non-drivetrain hardware.
-    public static final String intakeMotorName = "intake";
     public static final String shootingMotorName = "shiitee";
     public static final String rightElevatorName = "right lift";
     public static final String leftElevatorName = "left lift";

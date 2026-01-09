@@ -10,15 +10,10 @@ import androidx.annotation.NonNull;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierPoint;
 import com.pedropathing.geometry.Pose;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.teamcode.nordicStorm.pixy.PixyHelper;
 
 
@@ -32,10 +27,10 @@ public class Langskip {
 
     public final DriveTrain driveTrain;
     public final InnerSubsystem innerSubsystem;
+    public final Intake intake;
 
 
-    //private final Limelight3A limelight;
-    private final Servo signalLight;
+    public final Servo signalLight;
     private final PixyHelper pixyHelper = new PixyHelper(5);
 
     private final Pose afterHPIntake, beforeHPIntake;
@@ -68,6 +63,7 @@ public class Langskip {
     public Langskip(@NonNull final HardwareMap hardwareMap, NordicConstants.AllianceColor allianceColor) {
         driveTrain = new DriveTrain(hardwareMap, allianceColor);
         innerSubsystem = new InnerSubsystem(hardwareMap);
+        intake = new Intake(hardwareMap);
 
         signalLight = hardwareMap.get(Servo.class, signalLightName);
         setSignalColor(.333);
@@ -105,6 +101,7 @@ public class Langskip {
 
         telemetry.addData("Is busy: ", follower.isBusy());
         telemetry.addData("Follower Pose: ", follower.getPose());
+        telemetry.addData("Signal Light: ", signalLight.getPosition());
 
         switch (currentState) {
             case BALL_SEARCHING:
@@ -120,7 +117,7 @@ public class Langskip {
                 if (!pixyHelper.seesBall()) {
                     currentState = State.BALL_SEARCHING;
                 } else {
-                    innerSubsystem.setIntake(true);
+                    intake.runIntake(true);
                     double xPixelOffset = pixyHelper.getWeightedX() - pixyCenterXPixel;
                     Pose currentPose = follower.getPose();
                     double distance = 1265 / Math.sqrt(pixyHelper.getWeightedArea());
@@ -195,7 +192,6 @@ public class Langskip {
                 }
                 break;
             case IDLE:
-
         }
     }
 }

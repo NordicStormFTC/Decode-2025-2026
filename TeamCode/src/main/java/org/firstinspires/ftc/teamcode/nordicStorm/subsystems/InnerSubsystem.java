@@ -7,15 +7,19 @@ import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConsta
 import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.rightElevatorName;
 import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.shootingMotorName;
 
+import static java.lang.Double.NaN;
+
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.IgnoreConfigurable;
-import com.pedropathing.control.PIDFCoefficients;
+//import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.control.PIDFController;
 import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -25,74 +29,68 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class InnerSubsystem {
     @IgnoreConfigurable
     private final DcMotorEx shootingMotor;
-    private final Servo leftElevator, rightElevator;
-    private final Rev2mDistanceSensor distance1, distance2;
+    public final Servo leftElevator, rightElevator;
+    private final DistanceSensor proximity;
     private boolean shooting = false;
-    private boolean intaking = false;
-    private final PIDFController shooterPID;
+    //private final PIDFController shooterPID;
     private boolean override = false;
     private final Timer atRPMsince = new Timer();
     private final Timer timeSinceShot = new Timer();
     private final Timer shootingSince = new Timer();
 
+    private boolean flipperIsDown = true;
+    private int intakeSpeed = 3000;
+
 
     public InnerSubsystem(final HardwareMap hardwareMap) {
         shootingMotor = hardwareMap.get(DcMotorEx.class, shootingMotorName);
         shootingMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        distance1 = hardwareMap.get(Rev2mDistanceSensor.class, "d1");
-        distance2 = hardwareMap.get(Rev2mDistanceSensor.class, "d2");
+        shootingMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(Globals.shooterP, shooterI, shooterD, shooterFeedForwards));
+
+        proximity = hardwareMap.get(DistanceSensor.class, "proximity");
 
         rightElevator = hardwareMap.get(Servo.class, rightElevatorName);
         leftElevator = hardwareMap.get(Servo.class, leftElevatorName);
-        rightElevator.setPosition(.35); // TODO
-        leftElevator.setPosition(.35);
-        shooterPID = new PIDFController(new PIDFCoefficients(Globals.shooterP, shooterI, shooterD, shooterFeedForwards));
+        rightElevator.setPosition(.02);
+        leftElevator.setPosition(.66);
+        //shooterPID = new PIDFController(new PIDFCoefficients(Globals.shooterP, shooterI, shooterD, shooterFeedForwards));
     }
 
     public void periodic(Telemetry telemetry, double distance) {
-        // This defaults to not running the motor at all.
-        if (intaking) {
-            if (Math.abs(getRPM()) < 500) {
-                shootingMotor.setPower(-.5);
+        double targetRPM;
+        if (shooting) {
+            //targetRPM = findRPMFromDistance(distance);
+            targetRPM = intakeSpeed;
+        } else {
+            shootingSince.resetTimer();
+            targetRPM = 0;
+        }
+
+        //shooterPID.updateError((targetRPM - getRPM()));
+        setRPM(targetRPM);
+        telemetry.addData("RPM: ", getRPM());
+        telemetry.addData("Target RPM: ", targetRPM);
+        //telemetry.addData("Shooter PID: ", shooterPID.run());
+        telemetry.addData("Ball Distance: ", getDistance());
+
+
+        if (Math.abs(targetRPM - getRPM()) < 100 && shooting) {
+            if (flipperIsDown && waitedSinceLastShot() && getDistance() < 100 && nonOscillatingRPM() && rampingTimeIsGood()) {
+                moveFlipperUp();
+                timeSinceShot.resetTimer();
             }
         } else {
-            double targetRPM;
-            if (shooting) {
-                targetRPM = findRPMFromDistance(distance);
-            } else {
-                shootingSince.resetTimer();
-                targetRPM = 0;
-            }
-
-            shooterPID.updateError((targetRPM - getRPM()));
-            setRPM(shooterPID.run());
-            telemetry.addData("RPM: ", getRPM());
-            telemetry.addData("Target RPM: ", targetRPM);
-            telemetry.addData("Ball Distance: ", getDistance());
-
-
-            if (Math.abs(targetRPM - getRPM()) < 100 && shooting) {
-                if (flipperIsDown() && waitedSinceLastShot() && getDistance() < 70 && nonOscillatingRPM() && rampingTimeIsGood()) {
-                    moveFlipperUp();
-                    timeSinceShot.resetTimer();
-                }
-            } else {
-                atRPMsince.resetTimer();
-            }
-            if (timeSinceShot.getElapsedTimeSeconds() > .35 && !elevatorAt(.35)) {
-                if (!override) {
-                    moveFlipperDown();
-                }
+            atRPMsince.resetTimer();
+        }
+        if (timeSinceShot.getElapsedTimeSeconds() > .5 && !flipperIsDown) {
+            if (!override) {
+                moveFlipperDown();
             }
         }
     }
 
     private boolean rampingTimeIsGood() {
         return shootingSince.getElapsedTimeSeconds() > 1.5;
-    }
-
-    private boolean flipperIsDown() {
-        return !elevatorAt(.75);
     }
 
     private boolean nonOscillatingRPM() {
@@ -115,44 +113,36 @@ public class InnerSubsystem {
         override = b;
     }
 
-    private boolean elevatorAt(double pos) {
-        return rightElevator.getPosition() == pos && leftElevator.getPosition() == pos;
+    public void setIntakeSpped(int speed) {
+        intakeSpeed = speed;
     }
 
     public void moveFlipperDown() {
-        rightElevator.setPosition(.35); //TODO
-        leftElevator.setPosition(.35);
+        flipperIsDown = true;
+        rightElevator.setPosition(.02);
+        leftElevator.setPosition(.66);
     }
 
     public void moveFlipperUp() {
-        rightElevator.setPosition(.75); //TODO
-        leftElevator.setPosition(.75);
+        flipperIsDown = false;
+        rightElevator.setPosition(.45);
+        leftElevator.setPosition(.2);
     }
 
     public double findRPMFromDistance(double distance) {
-        return -(-0.002267 * distance * distance * distance + 0.6989 * distance * distance - 61.34 * distance + 6341.27) + 100;
+        return (-0.002267 * distance * distance * distance + 0.6989 * distance * distance - 61.34 * distance + 6341.27) - 100;
         //return -(0.1270 * distance * distance - 14.4090 * distance + 5092.8328);
         //return -1.31E+09 + 1.68E+08*distance  -9.63E+06*Math.pow(distance, 2) + 325631*Math.pow(distance, 3) - -7185*Math.pow(distance, 4) + 108*Math.pow(distance, 5) -1.12*Math.pow(distance, 6) + 7.95E-03*Math.pow(distance, 7) -3.67E-05*Math.pow(distance, 8) + 9.99E-08*Math.pow(distance, 9) -1.22E-10*Math.pow(distance, 10);
     }
 
     public void setShooting(boolean doShoot) {
-        if (doShoot) {
-            setIntake(false);
-        }
         shooting = doShoot;
     }
 
-    public void setIntake(boolean doIntake) {
-        if (doIntake) {
-            setShooting(false);
-        }
-        intaking = doIntake;
-    }
-
     private double getDistance() {
-        double d1 = distance1.getDistance(DistanceUnit.MM);
-        double d2 = distance2.getDistance(DistanceUnit.MM);
-
-        return Math.min(d1, d2);
+        if (Double.isNaN(proximity.getDistance(DistanceUnit.MM))) {
+            return 10000;
+        }
+        return proximity.getDistance(DistanceUnit.MM);
     }
 }

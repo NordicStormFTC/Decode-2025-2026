@@ -124,11 +124,11 @@ public class SelectableAuto extends OpMode {
         if (!openGate && !endAfter) {
             return follower.pathBuilder()
                     .addPath(new BezierLine(scorePose, beforeBall)) // Drive from the scoring position to the first spike mark
-                    .addParametricCallback(.01, () -> langskip.innerSubsystem.setIntake(false))
+                    .addParametricCallback(.01, () -> langskip.intake.runIntake(false))
                     .addParametricCallback(.8, () -> follower.setMaxPower(.6)) // When 80& of the way complete, slow speed to 60%
                     .setLinearHeadingInterpolation(scorePose.getHeading(), beforeBall.getHeading(), .75)
                     .addPath(new BezierLine(beforeBall, afterBall)) // We are now inline with the balls, drive straight forwards.
-                    .addParametricCallback(.01, () -> langskip.innerSubsystem.setIntake(true)) // Turn on the intake
+                    .addParametricCallback(.01, () -> langskip.intake.runIntake(true)) // Turn on the intake
                     .addParametricCallback(.01, () -> follower.setMaxPower(.3)) // Move at 20% speed
                     .setLinearHeadingInterpolation(beforeBall.getHeading(), afterBall.getHeading())
                     //.addPath(new BezierLine(afterBall, beforeBall))
@@ -137,21 +137,21 @@ public class SelectableAuto extends OpMode {
                     //.addParametricCallback(.01, () -> follower.setMaxPower(1)) // Drive at full speed.
                     .addPath(new BezierLine(afterBall, scorePose)) // After picking up the balls, move back to the scoring position
                     .addParametricCallback(.01, () -> follower.setMaxPower(1)) // Move at 20% speed
-                    .addParametricCallback(.25, () -> langskip.innerSubsystem.setIntake(false))
+                    .addParametricCallback(.25, () -> langskip.intake.runIntake(false))
                     .setLinearHeadingInterpolation(afterBall.getHeading(), scorePose.getHeading(), .75)
                     .build();
         } else if (!endAfter) {
             return follower.pathBuilder()
                     .addPath(new BezierLine(scorePose, beforeBall)) // Drive from the scoring position to the first spike mark
-                    .addParametricCallback(.01, () -> langskip.innerSubsystem.setIntake(false))
+                    .addParametricCallback(.01, () -> langskip.intake.runIntake(false))
                     .addParametricCallback(.8, () -> follower.setMaxPower(.6)) // When 80% of the way complete, slow speed to 60%
                     .setLinearHeadingInterpolation(scorePose.getHeading(), beforeBall.getHeading(), .75)
                     .addPath(new BezierLine(beforeBall, afterBall)) // We are now inline with the balls, drive straight forwards.
-                    .addParametricCallback(.01, () -> langskip.innerSubsystem.setIntake(true)) // Turn on the intake
+                    .addParametricCallback(.01, () -> langskip.intake.runIntake(true)) // Turn on the intake
                     .addParametricCallback(.01, () -> follower.setMaxPower(.35)) // Move at 20% speed
                     .setLinearHeadingInterpolation(beforeBall.getHeading(), afterBall.getHeading())
                     .addPath(new BezierLine(afterBall, beforeReleaseGatePose))
-                    .addParametricCallback(.5, () -> langskip.innerSubsystem.setIntake(false)) // Turn off the intake after the path is 20% complete
+                    .addParametricCallback(.5, () -> langskip.intake.runIntake(false)) // Turn off the intake after the path is 20% complete
                     .addParametricCallback(.01, () -> follower.setMaxPower(.75)) // Drive at medium speed.
                     .addPath(new BezierLine(beforeReleaseGatePose, releaseGatePose))
                     .addParametricCallback(.5, () -> follower.setMaxPower(.5))
@@ -165,16 +165,16 @@ public class SelectableAuto extends OpMode {
         } else {
             return follower.pathBuilder()
                     .addPath(new BezierLine(scorePose, beforeBall)) // Drive from the scoring position to the first spike mark
-                    .addParametricCallback(.01, () -> langskip.innerSubsystem.setIntake(false))
+                    .addParametricCallback(.01, () -> langskip.intake.runIntake(false))
                     .addParametricCallback(.8, () -> follower.setMaxPower(.6)) // When 80& of the way complete, slow speed to 60%
                     .setLinearHeadingInterpolation(scorePose.getHeading(), beforeBall.getHeading())
                     .addPath(new BezierLine(beforeBall, afterBall)) // We are now inline with the balls, drive straight forwards.
-                    .addParametricCallback(.01, () -> langskip.innerSubsystem.setIntake(true)) // Turn on the intake
+                    .addParametricCallback(.01, () -> langskip.intake.runIntake(true)) // Turn on the intake
                     .addParametricCallback(.01, () -> follower.setMaxPower(.35)) // Move at 20% speed
                     .setLinearHeadingInterpolation(beforeBall.getHeading(), afterBall.getHeading())
                     .addPath(new BezierLine(afterBall, beforeBall))
                     .setLinearHeadingInterpolation(afterBall.getHeading(), beforeBall.getHeading())
-                    .addParametricCallback(.5, () -> langskip.innerSubsystem.setIntake(false)) // Turn off the intake after the path is 50% complete
+                    .addParametricCallback(.5, () -> langskip.intake.runIntake(false)) // Turn off the intake after the path is 50% complete
                     .addParametricCallback(.01, () -> follower.setMaxPower(1)) // Drive at full speed.
                     .addPath(new BezierLine(beforeBall, endPose)) // After picking up the balls, move back to the scoring position
                     .setLinearHeadingInterpolation(beforeBall.getHeading(), endPose.getHeading())
@@ -237,7 +237,7 @@ public class SelectableAuto extends OpMode {
             case 2:
                 if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 4) {
                     langskip.innerSubsystem.setShooting(false);
-                    langskip.innerSubsystem.setIntake(false);
+                    langskip.intake.runIntake(false);
                     follower.followPath(paths[0], true);
                     actionTimer.resetTimer();
                     setPathState(3);
@@ -256,7 +256,7 @@ public class SelectableAuto extends OpMode {
                 if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 4) {
                     langskip.innerSubsystem.setShooting(false);
                     follower.followPath(paths[1], true);
-                    langskip.innerSubsystem.setIntake(false);
+                    langskip.intake.runIntake(false);
                     actionTimer.resetTimer();
                     setPathState(5);
                 }
@@ -273,7 +273,7 @@ public class SelectableAuto extends OpMode {
             case 6:
                 if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 4) {
                     langskip.innerSubsystem.setShooting(false);
-                    langskip.innerSubsystem.setIntake(false);
+                    langskip.intake.runIntake(false);
                     follower.followPath(paths[2], true);
                     actionTimer.resetTimer();
                     if (!Globals.shootFourTimes) {
@@ -295,7 +295,7 @@ public class SelectableAuto extends OpMode {
             case 8:
                 if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 4) {
                     langskip.innerSubsystem.setShooting(false);
-                    langskip.innerSubsystem.setIntake(false);
+                    langskip.intake.runIntake(false);
                     follower.followPath(moveToEnd, true);
                     setPathState(-1); // End
                 }
@@ -305,7 +305,7 @@ public class SelectableAuto extends OpMode {
                     follower.followPath(follower.pathBuilder()
                             .addPath(new BezierLine(follower.getPose(), endPose))
                             .addParametricCallback(.65, () -> follower.setMaxPower(.4))
-                            .addParametricCallback(.1, () -> langskip.innerSubsystem.setIntake(false))
+                            .addParametricCallback(.1, () -> langskip.intake.runIntake(false))
                             .setLinearHeadingInterpolation(follower.getHeading(), endPose.getHeading())
                             .build());
                 }
@@ -362,11 +362,6 @@ public class SelectableAuto extends OpMode {
     public void start() {
         opmodeTimer.resetTimer();
         setPathState(0);
-        if (Globals.ALLIANCE_COLOR == NordicConstants.AllianceColor.BLUE) {
-            langskip.setSignalColor(.611);
-        } else {
-            langskip.setSignalColor(.277);
-        }
     }
 
     /**
