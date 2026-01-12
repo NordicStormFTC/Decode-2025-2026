@@ -231,7 +231,7 @@ public class SelectableAuto extends OpMode {
                     follower.setMaxPower(.85);
                     langskip.innerSubsystem.setShooting(true);
                     actionTimer.resetTimer();
-                    setPathState(12);
+                    setPathState(2);
                 }
                 break;
             case 2:

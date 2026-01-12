@@ -24,7 +24,7 @@ public class TournamentTeleop extends OpMode {
     private boolean slowMode = true;
     private final double slowModeMultiplier = .65;
 
-    public int a = 3000;
+    public int a = 2500;
 
     private NordicConstants.AllianceColor allianceColor;
 
@@ -44,12 +44,6 @@ public class TournamentTeleop extends OpMode {
     @Override
     public void start() {
         follower.startTeleopDrive();
-        langskip.signalLight.setPosition(.277);
-        /*if (allianceColor == NordicConstants.AllianceColor.BLUE) {
-            langskip.setSignalColor(.611);
-        } else {
-            langskip.setSignalColor(.277);
-        } */
     }
 
 
@@ -136,15 +130,12 @@ public class TournamentTeleop extends OpMode {
         } */
 
         if (gamepad1.dpadDownWasPressed()) {
-            langskip.setSignalColor(.277);
             a -= 50;
+            langskip.innerSubsystem.setIntakeSpped(a);
         }
 
         if (gamepad1.dpadUpWasPressed()) {
             a += 50;
-        }
-
-        if (gamepad1.dpadLeftWasPressed()) {
             langskip.innerSubsystem.setIntakeSpped(a);
         }
 

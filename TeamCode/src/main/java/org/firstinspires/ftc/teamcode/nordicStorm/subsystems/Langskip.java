@@ -66,7 +66,7 @@ public class Langskip {
         intake = new Intake(hardwareMap);
 
         signalLight = hardwareMap.get(Servo.class, signalLightName);
-        setSignalColor(.333);
+        setSignalColor(.333); //.333
         follower = driveTrain.follower;
 
         this.allianceColor = allianceColor;
@@ -91,17 +91,20 @@ public class Langskip {
 
     public void periodic(Telemetry telemetry) {
         double shootDistance = Math.sqrt(Math.pow(follower.getPose().getX() - shootingPose.getX(), 2) + Math.pow(follower.getPose().getY() - shootingPose.getY(), 2));
-        telemetry.addData("Shooting distance: ", shootDistance);
-
         innerSubsystem.periodic(telemetry, shootDistance);
-        //innerSubsystem.periodic(telemetry, sRPM);
+        if (innerSubsystem.getDistance() < 70) {
+            setSignalColor(.505);
+        } else {
+            if (allianceColor == NordicConstants.AllianceColor.BLUE) {
+                setSignalColor(.615);
+            } else {
+                setSignalColor(.283);
+            }
+        }
 
-
-        // ----- Retrieve and update Robot information -----
-
+        telemetry.addData("Shooting distance: ", shootDistance);
         telemetry.addData("Is busy: ", follower.isBusy());
         telemetry.addData("Follower Pose: ", follower.getPose());
-        telemetry.addData("Signal Light: ", signalLight.getPosition());
 
         switch (currentState) {
             case BALL_SEARCHING:
@@ -132,7 +135,6 @@ public class Langskip {
 
                     } else {
                         currentState = State.BALL_CHARGING;
-                        signalLight.setPosition(0);
                         chargeTime = currentTimeMillis();
                     }
                 }

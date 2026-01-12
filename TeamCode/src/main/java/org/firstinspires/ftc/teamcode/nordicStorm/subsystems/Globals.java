@@ -10,14 +10,6 @@ import java.util.Map;
 @Configurable
 public class Globals {
 
-    @IgnoreConfigurable
-    public enum ObeliskPattern {
-        PPG,
-        PGP,
-        GPP,
-        UNKNOWN
-    }
-
     // This holds the robot position at the end of auto so Teleop knows where we start.
     @IgnoreConfigurable
     public static Pose END_OF_AUTO_POSE = new Pose(96, 9.5, Math.toRadians(90));
@@ -45,9 +37,13 @@ public class Globals {
     public static NordicConstants.AllianceColor ALLIANCE_COLOR = NordicConstants.AllianceColor.RED;
 
     // Shooter PID values
-    public static double shooterP = 5;
-    public static double shooterD = .1;
+    @IgnoreConfigurable
+    public static double shooterP = 250;
+    @IgnoreConfigurable
+    public static double shooterD = 0;
+    @IgnoreConfigurable
     public static double shooterI = 0;
-    public static double shooterFeedForwards = 13.2;
+    @IgnoreConfigurable
+    public static double shooterFeedForwards = 20.5;
 
 }
