@@ -22,7 +22,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class InnerSubsystem {
     private final DcMotorEx shootingMotor;
     public final Servo leftElevator, rightElevator;
-    private final DistanceSensor proximity;
+    private final DistanceSensor proximity1;
+    private final DistanceSensor proximity2;
     private boolean shooting = false;
     private boolean override = false;
     private final Timer atRPMsince = new Timer();
@@ -38,7 +39,9 @@ public class InnerSubsystem {
         shootingMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shootingMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(shooterP, shooterI, shooterD, shooterFeedForwards));
 
-        proximity = hardwareMap.get(DistanceSensor.class, "proximity");
+        proximity1 = hardwareMap.get(DistanceSensor.class, "proximity1");
+        proximity2 = hardwareMap.get(DistanceSensor.class, "proximity2");
+
 
         rightElevator = hardwareMap.get(Servo.class, rightElevatorName);
         leftElevator = hardwareMap.get(Servo.class, leftElevatorName);
@@ -58,11 +61,10 @@ public class InnerSubsystem {
 
         setRPM(targetRPM);
         telemetry.addData("RPM: ", getRPM());
-        telemetry.addData("Target RPM: ", targetRPM);
         telemetry.addData("Ball Distance: ", getDistance());
 
 
-        if (Math.abs(targetRPM - getRPM()) < 100 && shooting) {
+        if (shooting && Math.abs(targetRPM - getRPM()) < 100) {
             if (flipperIsDown && waitedSinceLastShot() && getDistance() < 70 && nonOscillatingRPM() && rampingTimeIsGood()) {
                 moveFlipperUp();
                 timeSinceShot.resetTimer();
@@ -70,6 +72,7 @@ public class InnerSubsystem {
         } else {
             atRPMsince.resetTimer();
         }
+
         if (timeSinceShot.getElapsedTimeSeconds() > .65 && !flipperIsDown) {
             if (!override) {
                 moveFlipperDown();
@@ -82,7 +85,7 @@ public class InnerSubsystem {
     }
 
     private boolean nonOscillatingRPM() {
-        return atRPMsince.getElapsedTimeSeconds() > .15;
+        return atRPMsince.getElapsedTimeSeconds() > .25;
     }
 
     private boolean waitedSinceLastShot() {
@@ -113,7 +116,7 @@ public class InnerSubsystem {
 
     public void moveFlipperUp() {
         flipperIsDown = false;
-        rightElevator.setPosition(.5);
+        rightElevator.setPosition(.52);
         leftElevator.setPosition(.16);
     }
 
@@ -126,7 +129,8 @@ public class InnerSubsystem {
     }
 
     public double getDistance() {
-        if (Double.isNaN(proximity.getDistance(DistanceUnit.MM))) return 10000;
-        return proximity.getDistance(DistanceUnit.MM);
+        double dist1 = Double.isNaN(proximity1.getDistance(DistanceUnit.MM)) ? 10000 : proximity1.getDistance(DistanceUnit.MM);
+        double dist2 = Double.isNaN(proximity2.getDistance(DistanceUnit.MM)) ? 10000 : proximity2.getDistance(DistanceUnit.MM);
+        return Math.min(dist1, dist2);
     }
 }

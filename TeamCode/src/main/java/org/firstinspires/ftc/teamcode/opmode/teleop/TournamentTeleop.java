@@ -7,7 +7,6 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Langskip;
@@ -51,7 +50,6 @@ public class TournamentTeleop extends OpMode {
     public void loop() {
         //Call this once per loop
         follower.update();
-        telemetryM.update();
         langskip.periodic(telemetry);
         telemetry.addData("Langskip state:", langskip.currentState);
         telemetry.addData("Heading Error: ", follower.getHeadingError());
@@ -130,18 +128,18 @@ public class TournamentTeleop extends OpMode {
         } */
 
         if (gamepad1.dpadDownWasPressed()) {
-            a -= 50;
+            a -= 20;
             langskip.innerSubsystem.setIntakeSpped(a);
         }
 
         if (gamepad1.dpadUpWasPressed()) {
-            a += 50;
+            a += 20;
             langskip.innerSubsystem.setIntakeSpped(a);
         }
 
         // Y = Shooting
         if (gamepad1.yWasPressed()) {
-            langskip.changeState(Langskip.State.SHOOTING);
+            langskip.changeState(Langskip.State.AIMING);
             langskip.intake.runIntakeSlow();
         }
         if (gamepad1.yWasReleased()) {

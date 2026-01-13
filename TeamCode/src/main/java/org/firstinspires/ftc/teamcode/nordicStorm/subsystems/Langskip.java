@@ -31,7 +31,6 @@ public class Langskip {
 
 
     public final Servo signalLight;
-    private final PixyHelper pixyHelper = new PixyHelper(5);
 
     private final Pose afterHPIntake, beforeHPIntake;
 
@@ -40,9 +39,6 @@ public class Langskip {
     private final Follower follower;
 
     public enum State {
-        BALL_SEARCHING,
-        BALL_SEEKING,
-        BALL_CHARGING,
         HPINTAKE,
         AIMING,
         SHOOTING,
@@ -51,8 +47,6 @@ public class Langskip {
     }
 
     public State currentState = State.IDLE;
-
-    private double chargeTime = Integer.MAX_VALUE;
 
     private final Pose shootingPose;
 
@@ -103,59 +97,9 @@ public class Langskip {
         }
 
         telemetry.addData("Shooting distance: ", shootDistance);
-        telemetry.addData("Is busy: ", follower.isBusy());
         telemetry.addData("Follower Pose: ", follower.getPose());
 
         switch (currentState) {
-            case BALL_SEARCHING:
-                if (pixyHelper.seesBall()) {
-                    currentState = State.BALL_SEEKING;
-                } else {
-                    Pose currentPose = follower.getPose();
-                    Pose targetPose = new Pose(currentPose.getX(), currentPose.getY(), currentPose.getHeading() - Math.PI);
-                    follower.holdPoint(new BezierPoint(targetPose), targetPose.getHeading());
-                }
-                break;
-            case BALL_SEEKING:
-                if (!pixyHelper.seesBall()) {
-                    currentState = State.BALL_SEARCHING;
-                } else {
-                    intake.runIntake(true);
-                    double xPixelOffset = pixyHelper.getWeightedX() - pixyCenterXPixel;
-                    Pose currentPose = follower.getPose();
-                    double distance = 1265 / Math.sqrt(pixyHelper.getWeightedArea());
-                    telemetry.addData("X Offset: ", xPixelOffset);
-                    telemetry.addData("Calculated minimum offset: ", 40 / Math.sqrt(distance));
-
-                    if (xPixelOffset < -20 / Math.sqrt(distance)) {
-                        follower.holdPoint(new Pose(currentPose.getX(), currentPose.getY(), currentPose.getHeading() + .5));
-
-                    } else if (xPixelOffset > 20 / Math.sqrt(distance)) {
-                        follower.holdPoint(new Pose(currentPose.getX(), currentPose.getY(), currentPose.getHeading() - .5));
-
-                    } else {
-                        currentState = State.BALL_CHARGING;
-                        chargeTime = currentTimeMillis();
-                    }
-                }
-                break;
-            case BALL_CHARGING:
-                if (currentTimeMillis() - chargeTime > 300) {
-                    chargeTime = Integer.MAX_VALUE;
-                    currentState = State.BALL_SEARCHING;
-                } else {
-                    if (pixyHelper.seesBall()) {
-                        chargeTime = currentTimeMillis();
-                    }
-                    Pose currentPose = follower.getPose();
-                    double ballAngle = currentPose.getHeading() + Math.PI;
-                    double distance = 400 / Math.sqrt(pixyHelper.getMaxArea());
-
-
-                    BezierPoint finalPose = new BezierPoint(new Pose(currentPose.getX() - Math.cos(ballAngle) * (-distance), currentPose.getY() - Math.sin(ballAngle) * (-distance), currentPose.getHeading()));
-                    follower.holdPoint(finalPose, currentPose.getHeading(), false);
-                }
-                break;
             case HPINTAKE:
                 if (!follower.isBusy()) {
                     follower.holdPoint(new BezierPoint(beforeHPIntake.getX(), beforeHPIntake.getY()), beforeHPIntake.getHeading());
