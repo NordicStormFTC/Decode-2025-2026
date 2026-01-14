@@ -30,10 +30,6 @@ public class Globals {
     public static int HP3Priority = 5;
 
     public static int openGateAfterPickup = 0; // If one, will empty gate after grabbing the first artifact set.
-    @IgnoreConfigurable
-    public static boolean findMotifTag = false;
-    @IgnoreConfigurable
-    public static boolean shootFourTimes = false;
 
     // IMPORTANT: This needs to be set at the beginning of every match
     public static NordicConstants.AllianceColor ALLIANCE_COLOR = NordicConstants.AllianceColor.RED;
@@ -46,6 +42,6 @@ public class Globals {
     @IgnoreConfigurable
     public static double shooterI = 0;
     @IgnoreConfigurable
-    public static double shooterFeedForwards = 20.5;
+    public static double shooterFeedForwards = 19.8;
 
 }

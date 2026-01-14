@@ -20,16 +20,13 @@ public class Intake extends SubsystemBase {
     }
 
     public void runIntake(boolean doRun) {
-        if (doRun) {
-            intakeMotor.setPower(-1);
-        } else {
-            intakeMotor.setPower(0);
-        }
+        int power = doRun ? -1 : 0;
+        intakeMotor.setPower(power);
         isRunning = doRun;
     }
 
     public void runIntakeSlow() {
         isRunning = true;
-        intakeMotor.setPower(.75);
+        intakeMotor.setPower(-.75);
     }
 }

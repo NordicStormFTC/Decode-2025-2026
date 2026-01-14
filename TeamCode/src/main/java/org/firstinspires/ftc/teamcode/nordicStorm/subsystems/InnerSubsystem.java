@@ -9,6 +9,7 @@ import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConsta
 import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.shootingMotorName;
 
 import com.pedropathing.util.Timer;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
@@ -22,8 +23,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class InnerSubsystem {
     private final DcMotorEx shootingMotor;
     public final Servo leftElevator, rightElevator;
-    private final DistanceSensor proximity1;
-    private final DistanceSensor proximity2;
+    private final RevColorSensorV3 proximity1;
+    private final RevColorSensorV3 proximity2;
     private boolean shooting = false;
     private boolean override = false;
     private final Timer atRPMsince = new Timer();
@@ -39,8 +40,8 @@ public class InnerSubsystem {
         shootingMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shootingMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(shooterP, shooterI, shooterD, shooterFeedForwards));
 
-        proximity1 = hardwareMap.get(DistanceSensor.class, "proximity1");
-        proximity2 = hardwareMap.get(DistanceSensor.class, "proximity2");
+        proximity1 = hardwareMap.get(RevColorSensorV3.class, "proximity1");
+        proximity2 = hardwareMap.get(RevColorSensorV3.class, "proximity2");
 
 
         rightElevator = hardwareMap.get(Servo.class, rightElevatorName);
@@ -65,7 +66,7 @@ public class InnerSubsystem {
 
 
         if (shooting && Math.abs(targetRPM - getRPM()) < 100) {
-            if (flipperIsDown && waitedSinceLastShot() && getDistance() < 70 && nonOscillatingRPM() && rampingTimeIsGood()) {
+            if (flipperIsDown && waitedSinceLastShot() && getDistance() < 25 && nonOscillatingRPM() && rampingTimeIsGood()) {
                 moveFlipperUp();
                 timeSinceShot.resetTimer();
             }
@@ -73,7 +74,7 @@ public class InnerSubsystem {
             atRPMsince.resetTimer();
         }
 
-        if (timeSinceShot.getElapsedTimeSeconds() > .65 && !flipperIsDown) {
+        if (timeSinceShot.getElapsedTimeSeconds() > .6 && !flipperIsDown) {
             if (!override) {
                 moveFlipperDown();
             }
@@ -121,7 +122,7 @@ public class InnerSubsystem {
     }
 
     public double findRPMFromDistance(double distance) {
-        return (-0.002267 * distance * distance * distance + 0.6989 * distance * distance - 61.34 * distance + 6341.27) - 100;
+        return 10.4 * distance + 1924;
     }
 
     public void setShooting(boolean doShoot) {
@@ -129,8 +130,13 @@ public class InnerSubsystem {
     }
 
     public double getDistance() {
-        double dist1 = Double.isNaN(proximity1.getDistance(DistanceUnit.MM)) ? 10000 : proximity1.getDistance(DistanceUnit.MM);
-        double dist2 = Double.isNaN(proximity2.getDistance(DistanceUnit.MM)) ? 10000 : proximity2.getDistance(DistanceUnit.MM);
+        double dist1 = proximity1.getDistance(DistanceUnit.MM);
+        double dist2 = proximity2.getDistance(DistanceUnit.MM);
+        if (Double.isNaN(dist1)) {
+            dist1 = 10000;
+        } else if (Double.isNaN(dist2)) {
+            dist2 = 10000;
+        }
         return Math.min(dist1, dist2);
     }
 }

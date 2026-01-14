@@ -50,6 +50,7 @@ public class TournamentTeleop extends OpMode {
     public void loop() {
         //Call this once per loop
         follower.update();
+        telemetry.update();
         langskip.periodic(telemetry);
         telemetry.addData("Langskip state:", langskip.currentState);
         telemetry.addData("Heading Error: ", follower.getHeadingError());
@@ -110,11 +111,13 @@ public class TournamentTeleop extends OpMode {
         if (gamepad1.dpadRightWasPressed()) {
             langskip.innerSubsystem.setOverride(true);
             langskip.innerSubsystem.moveFlipperUp();
+            telemetry.addData("I am pressing this:", true);
         }
 
         if (gamepad1.dpadRightWasReleased()) {
             langskip.innerSubsystem.setOverride(false);
             langskip.innerSubsystem.moveFlipperDown();
+            telemetry.addData("I am pressing this:", false);
         }
 
 

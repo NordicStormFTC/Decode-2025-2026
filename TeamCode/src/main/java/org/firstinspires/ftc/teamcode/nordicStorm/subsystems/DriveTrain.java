@@ -6,12 +6,11 @@ import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+// 32 47 140 32 137 21 334 178
 
 /**
  * Drivetrain Subsystem.
  * Most drivetrain functions are handled naturally by PP
- * This subsystem initializes the PP follower and the limelight.
- * It also contains helper methods related to the drivetrain.
  */
 public class DriveTrain extends SubsystemBase {
 
@@ -22,7 +21,6 @@ public class DriveTrain extends SubsystemBase {
         follower = Constants.createFollower(hardwareMap);
         shootingPose = allianceColor == NordicConstants.AllianceColor.RED ? NordicConstants.redGoalPose : NordicConstants.blueGoalPose;
     }
-
 
     /**
      * Find the angle the robot needs to face the goal.

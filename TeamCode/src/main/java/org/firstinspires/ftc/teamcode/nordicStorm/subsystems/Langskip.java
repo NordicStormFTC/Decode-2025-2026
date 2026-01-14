@@ -1,9 +1,7 @@
 package org.firstinspires.ftc.teamcode.nordicStorm.subsystems;
 
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.pixyCenterXPixel;
 import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.signalLightName;
 
-import static java.lang.System.currentTimeMillis;
 
 import androidx.annotation.NonNull;
 
@@ -14,7 +12,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.nordicStorm.pixy.PixyHelper;
 
 
 /**
@@ -28,7 +25,6 @@ public class Langskip {
     public final DriveTrain driveTrain;
     public final InnerSubsystem innerSubsystem;
     public final Intake intake;
-
 
     public final Servo signalLight;
 
@@ -47,7 +43,6 @@ public class Langskip {
     }
 
     public State currentState = State.IDLE;
-
     private final Pose shootingPose;
 
 
@@ -65,7 +60,6 @@ public class Langskip {
 
         this.allianceColor = allianceColor;
         shootingPose = allianceColor == NordicConstants.AllianceColor.RED ? NordicConstants.redGoalPose : NordicConstants.blueGoalPose;
-
 
         beforeHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(106, 12, Math.toRadians(180)) : new Pose(38, 12, Math.toRadians(0));
         afterHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(132, 12, Math.toRadians(180)) : new Pose(12, 12, Math.toRadians(0));
@@ -86,8 +80,8 @@ public class Langskip {
     public void periodic(Telemetry telemetry) {
         double shootDistance = Math.sqrt(Math.pow(follower.getPose().getX() - shootingPose.getX(), 2) + Math.pow(follower.getPose().getY() - shootingPose.getY(), 2));
         innerSubsystem.periodic(telemetry, shootDistance);
-        if (innerSubsystem.getDistance() < 70) {
-            setSignalColor(.505);
+        if (innerSubsystem.getDistance() < 25) {
+            setSignalColor(.365); //505
         } else {
             if (allianceColor == NordicConstants.AllianceColor.BLUE) {
                 setSignalColor(.615);
@@ -123,7 +117,7 @@ public class Langskip {
 
                 follower.turnTo(angleToGoal);
 
-                if (Math.abs(follower.getHeading() - angleToGoal) < .1 || (Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI < .05) && Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI > 0) {
+                if (Math.abs(follower.getHeading() - angleToGoal) < .02 || (Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI < .02) && Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI > 0) {
                     currentState = State.SHOOTING;
                 }
                 break;
