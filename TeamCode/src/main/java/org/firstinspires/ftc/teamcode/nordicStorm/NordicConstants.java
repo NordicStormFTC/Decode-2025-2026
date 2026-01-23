@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.nordicStorm.subsystems;
+package org.firstinspires.ftc.teamcode.nordicStorm;
 
 import com.pedropathing.geometry.Pose;
 
@@ -9,10 +9,18 @@ public class NordicConstants {
     public static final String rightElevatorName = "right lift";
     public static final String leftElevatorName = "left lift";
     public static final String signalLightName = "light";
+    public static final String limelightName = "limelight";
+
+    public static final double CAMERA_PITCH_DEG = 0;
+    public static final double TARGET_HEIGHT = 0.0635;
+    public static final double CAMERA_HEIGHT = 0;
+
+    public static final double limelightForwardOffset = 0; // TODO
+
 
     // Physical location of each goal Position
-    public static final Pose redGoalPose = new Pose(137, 137, 0);
-    public static final Pose blueGoalPose = new Pose(7, 137, 0);
+    public static final Pose redGoalPose = new Pose(137, 140, 0);
+    public static final Pose blueGoalPose = new Pose(7, 140, 0);
 
     public enum AllianceColor {
         RED,

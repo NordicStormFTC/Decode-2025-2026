@@ -1,17 +1,24 @@
 package org.firstinspires.ftc.teamcode.nordicStorm.subsystems;
 
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.signalLightName;
+import static org.firstinspires.ftc.teamcode.nordicStorm.NordicConstants.signalLightName;
 
-
-import androidx.annotation.NonNull;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierPoint;
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.nordicStorm.NordicConstants;
+import org.firstinspires.ftc.teamcode.nordicStorm.Vision.CoordinateConverter;
+import org.firstinspires.ftc.teamcode.nordicStorm.Vision.SmoothedTarget;
+import org.firstinspires.ftc.teamcode.nordicStorm.Vision.VisionHelper;
+
+import java.util.List;
 
 
 /**
@@ -26,6 +33,10 @@ public class Langskip {
     public final InnerSubsystem innerSubsystem;
     public final Intake intake;
 
+
+    public final Limelight3A limelight;
+    private final VisionHelper visionHelper;
+
     public final Servo signalLight;
 
     private final Pose afterHPIntake, beforeHPIntake;
@@ -36,6 +47,7 @@ public class Langskip {
 
     public enum State {
         HPINTAKE,
+        AUTO_INTAKE,
         AIMING,
         SHOOTING,
         AUTO_PARKING,
@@ -44,24 +56,32 @@ public class Langskip {
 
     public State currentState = State.IDLE;
     private final Pose shootingPose;
+    private final boolean isTeleop;
 
 
     /**
      * @param hardwareMap the hardware map for our subsystems to use. This provides the same instance of the hardware map to all subsystems
      */
-    public Langskip(@NonNull final HardwareMap hardwareMap, NordicConstants.AllianceColor allianceColor) {
+    public Langskip(final HardwareMap hardwareMap, NordicConstants.AllianceColor allianceColor, boolean isTeleop) {
         driveTrain = new DriveTrain(hardwareMap, allianceColor);
         innerSubsystem = new InnerSubsystem(hardwareMap);
         intake = new Intake(hardwareMap);
 
+        limelight = hardwareMap.get(Limelight3A.class, NordicConstants.limelightName);
+        limelight.setPollRateHz(50);
+        limelight.pipelineSwitch(1);
+        visionHelper = new VisionHelper(5);
+
+
+        this.isTeleop = isTeleop;
+
         signalLight = hardwareMap.get(Servo.class, signalLightName);
-        setSignalColor(.333); //.333
         follower = driveTrain.follower;
 
         this.allianceColor = allianceColor;
         shootingPose = allianceColor == NordicConstants.AllianceColor.RED ? NordicConstants.redGoalPose : NordicConstants.blueGoalPose;
 
-        beforeHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(106, 12, Math.toRadians(180)) : new Pose(38, 12, Math.toRadians(0));
+        beforeHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(106, 12, Math.toRadians(0)) : new Pose(38, 12, Math.toRadians(180));
         afterHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(132, 12, Math.toRadians(180)) : new Pose(12, 12, Math.toRadians(0));
     }
 
@@ -77,11 +97,21 @@ public class Langskip {
         signalLight.setPosition(color);
     }
 
+    private boolean llResultsAreGood() {
+        LLResult recent = limelight.getLatestResult();
+        return recent != null && recent.isValid() && recent.getStaleness() < 100;
+    }
+
     public void periodic(Telemetry telemetry) {
         double shootDistance = Math.sqrt(Math.pow(follower.getPose().getX() - shootingPose.getX(), 2) + Math.pow(follower.getPose().getY() - shootingPose.getY(), 2));
         innerSubsystem.periodic(telemetry, shootDistance);
-        if (innerSubsystem.getDistance() < 25) {
-            setSignalColor(.365); //505
+        if (llResultsAreGood()) {
+            visionHelper.update(limelight.getLatestResult().getDetectorResults());
+        }
+
+        //if (innerSubsystem.getDistance() < 25) {
+        if (visionHelper.seesBall()) {
+            setSignalColor(.72);
         } else {
             if (allianceColor == NordicConstants.AllianceColor.BLUE) {
                 setSignalColor(.615);
@@ -110,16 +140,33 @@ public class Langskip {
                     follower.followPath(HPIntake); */
                 }
                 break;
+            case AUTO_INTAKE:
+                if (visionHelper.seesBall()) {
+                    CoordinateConverter target = visionHelper.getTargetCoordinates(visionHelper.getSmoothedClosest());
+                    double xRobotOffset = target.x;
+                    double yRobotOffset = target.y + NordicConstants.limelightForwardOffset;
+                    telemetry.addData("Limelight left/right: ", target.x);
+                    telemetry.addData("Limelight forward/backwards: ", target.y);
+                }
+                break;
             case AIMING:
                 double angleToGoal = driveTrain.getAngleToGoal();
                 telemetry.addData("Angle to goal degrees: ", Math.toDegrees(angleToGoal));
                 telemetry.addData("Heading: ", Math.toDegrees(follower.getHeading()));
 
                 follower.turnTo(angleToGoal);
-
-                if (Math.abs(follower.getHeading() - angleToGoal) < .02 || (Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI < .02) && Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI > 0) {
-                    currentState = State.SHOOTING;
+                if (this.isTeleop) {
+                    innerSubsystem.setShooting(true);
                 }
+
+                if (Math.abs(follower.getHeading() - angleToGoal) < .035 || (Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI < .035) && Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI > 0) {
+                    currentState = State.SHOOTING;
+                    if (this.isTeleop) {
+                        innerSubsystem.setAtPoint(true);
+                        follower.holdPoint(follower.getPose());
+                    }
+                }
+
                 break;
             case SHOOTING:
                 this.innerSubsystem.setShooting(true);

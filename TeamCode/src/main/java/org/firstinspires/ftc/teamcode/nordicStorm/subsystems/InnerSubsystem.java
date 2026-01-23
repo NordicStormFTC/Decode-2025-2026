@@ -1,18 +1,17 @@
 package org.firstinspires.ftc.teamcode.nordicStorm.subsystems;
 
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Globals.shooterP;
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Globals.shooterI;
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Globals.shooterD;
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Globals.shooterFeedForwards;
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.leftElevatorName;
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.rightElevatorName;
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.shootingMotorName;
+import static org.firstinspires.ftc.teamcode.nordicStorm.Globals.shooterP;
+import static org.firstinspires.ftc.teamcode.nordicStorm.Globals.shooterI;
+import static org.firstinspires.ftc.teamcode.nordicStorm.Globals.shooterD;
+import static org.firstinspires.ftc.teamcode.nordicStorm.Globals.shooterFeedForwards;
+import static org.firstinspires.ftc.teamcode.nordicStorm.NordicConstants.leftElevatorName;
+import static org.firstinspires.ftc.teamcode.nordicStorm.NordicConstants.rightElevatorName;
+import static org.firstinspires.ftc.teamcode.nordicStorm.NordicConstants.shootingMotorName;
 
 import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -27,6 +26,7 @@ public class InnerSubsystem {
     private final RevColorSensorV3 proximity2;
     private boolean shooting = false;
     private boolean override = false;
+    private boolean atPoint = true;
     private final Timer atRPMsince = new Timer();
     private final Timer timeSinceShot = new Timer();
     private final Timer shootingSince = new Timer();
@@ -53,19 +53,20 @@ public class InnerSubsystem {
     public void periodic(Telemetry telemetry, double distance) {
         double targetRPM;
         if (shooting) {
-            //targetRPM = findRPMFromDistance(distance);
-            targetRPM = intakeSpeed;
+            targetRPM = findRPMFromDistance(distance);
+            //targetRPM = intakeSpeed;
         } else {
             shootingSince.resetTimer();
             targetRPM = 0;
+            shootingMotor.setPower(0);
         }
 
         setRPM(targetRPM);
         telemetry.addData("RPM: ", getRPM());
-        telemetry.addData("Ball Distance: ", getDistance());
+        telemetry.addData("Target RPM: ", targetRPM);
 
 
-        if (shooting && Math.abs(targetRPM - getRPM()) < 100) {
+        if (shooting && atPoint && Math.abs(targetRPM - getRPM()) < 125) {
             if (flipperIsDown && waitedSinceLastShot() && getDistance() < 25 && nonOscillatingRPM() && rampingTimeIsGood()) {
                 moveFlipperUp();
                 timeSinceShot.resetTimer();
@@ -74,8 +75,11 @@ public class InnerSubsystem {
             atRPMsince.resetTimer();
         }
 
-        if (timeSinceShot.getElapsedTimeSeconds() > .6 && !flipperIsDown) {
-            if (!override) {
+        if (!flipperIsDown && !override) {
+            if (timeSinceShot.getElapsedTimeSeconds() > .5) {
+                rightElevator.setPosition(.02);
+            }
+            if (timeSinceShot.getElapsedTimeSeconds() > .65) {
                 moveFlipperDown();
             }
         }
@@ -109,6 +113,10 @@ public class InnerSubsystem {
         intakeSpeed = speed;
     }
 
+    public void setAtPoint(boolean set) {
+        this.atPoint = set;
+    }
+
     public void moveFlipperDown() {
         flipperIsDown = true;
         rightElevator.setPosition(.02);
@@ -117,8 +125,8 @@ public class InnerSubsystem {
 
     public void moveFlipperUp() {
         flipperIsDown = false;
-        rightElevator.setPosition(.52);
-        leftElevator.setPosition(.16);
+        rightElevator.setPosition(.48); //.48
+        leftElevator.setPosition(.1);
     }
 
     public double findRPMFromDistance(double distance) {

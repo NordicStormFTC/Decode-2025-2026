@@ -1,16 +1,13 @@
 package org.firstinspires.ftc.teamcode.opmode.teleop;
 
-
-import com.bylazar.telemetry.PanelsTelemetry;
-import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Globals;
+import org.firstinspires.ftc.teamcode.nordicStorm.Globals;
 import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.Langskip;
-import org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants;
+import org.firstinspires.ftc.teamcode.nordicStorm.NordicConstants;
 
 
 @TeleOp(name = "Tournament Teleop")
@@ -19,23 +16,22 @@ public class TournamentTeleop extends OpMode {
 
     private Langskip langskip;
     public static Pose startingPose;
-    private TelemetryManager telemetryM;
     private boolean slowMode = true;
-    private final double slowModeMultiplier = .65;
+    private final double slowModeMultiplier = .35;
 
-    public int a = 2500;
+    private int a = 2500;
 
     private NordicConstants.AllianceColor allianceColor;
 
 
     @Override
     public void init() {
-        langskip = new Langskip(hardwareMap, Globals.ALLIANCE_COLOR);
+        langskip = new Langskip(hardwareMap, Globals.ALLIANCE_COLOR, true);
+        langskip.innerSubsystem.setAtPoint(false);
         startingPose = Globals.END_OF_AUTO_POSE;
         follower = langskip.getFollower();
         follower.setStartingPose(startingPose);
         follower.update();
-        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
         allianceColor = Globals.ALLIANCE_COLOR;
     }
@@ -43,6 +39,7 @@ public class TournamentTeleop extends OpMode {
     @Override
     public void start() {
         follower.startTeleopDrive();
+        langskip.limelight.start();
     }
 
 
@@ -54,14 +51,14 @@ public class TournamentTeleop extends OpMode {
         langskip.periodic(telemetry);
         telemetry.addData("Langskip state:", langskip.currentState);
         telemetry.addData("Heading Error: ", follower.getHeadingError());
-        telemetry.addData("Intake: ", a);
+        //telemetry.addData("Intake: ", a);
 
         if (langskip.currentState == Langskip.State.IDLE) {
             if (allianceColor == NordicConstants.AllianceColor.RED) {
                 if (!slowMode) follower.setTeleOpDrive(
                         -gamepad1.left_stick_y,
                         -gamepad1.left_stick_x,
-                        -gamepad1.right_stick_x,
+                        -gamepad1.right_stick_x * slowModeMultiplier,
                         false
                 );
 
@@ -76,7 +73,7 @@ public class TournamentTeleop extends OpMode {
                 if (!slowMode) follower.setTeleOpDrive(
                         gamepad1.left_stick_y,
                         gamepad1.left_stick_x,
-                        -gamepad1.right_stick_x,
+                        -gamepad1.right_stick_x * slowModeMultiplier,
                         false
                 );
 
@@ -107,30 +104,36 @@ public class TournamentTeleop extends OpMode {
             langskip.intake.runIntake(false);
         }
 
+        if (gamepad1.left_trigger > .5 && !langskip.intake.isRunning()) {
+            langskip.intake.runIntakeReverse(true);
+        }
+
+        if (gamepad1.right_trigger < .1 && langskip.currentState == Langskip.State.IDLE && langskip.intake.isRunning()) {
+            langskip.intake.runIntake(false);
+        }
+
         // Right DPad = Move flipper up
         if (gamepad1.dpadRightWasPressed()) {
             langskip.innerSubsystem.setOverride(true);
             langskip.innerSubsystem.moveFlipperUp();
-            telemetry.addData("I am pressing this:", true);
         }
 
         if (gamepad1.dpadRightWasReleased()) {
             langskip.innerSubsystem.setOverride(false);
             langskip.innerSubsystem.moveFlipperDown();
-            telemetry.addData("I am pressing this:", false);
         }
 
 
         //Slow Mode
-        /*if (gamepad1.dpadLeftWasPressed()) {
+        if (gamepad1.dpadLeftWasPressed()) {
             slowMode = !slowMode;
         }
 
         if (gamepad1.dpadDownWasPressed()) {
             follower.setPose(new Pose(72, 72, Math.toRadians(90)));
-        } */
+        }
 
-        if (gamepad1.dpadDownWasPressed()) {
+        /*if (gamepad1.dpadDownWasPressed()) {
             a -= 20;
             langskip.innerSubsystem.setIntakeSpped(a);
         }
@@ -138,7 +141,7 @@ public class TournamentTeleop extends OpMode {
         if (gamepad1.dpadUpWasPressed()) {
             a += 20;
             langskip.innerSubsystem.setIntakeSpped(a);
-        }
+        } */
 
         // Y = Shooting
         if (gamepad1.yWasPressed()) {
@@ -149,6 +152,7 @@ public class TournamentTeleop extends OpMode {
             langskip.changeState(Langskip.State.IDLE);
             langskip.innerSubsystem.setShooting(false);
             langskip.intake.runIntake(false);
+            langskip.innerSubsystem.setAtPoint(false);
             follower.startTeleopDrive();
         }
 

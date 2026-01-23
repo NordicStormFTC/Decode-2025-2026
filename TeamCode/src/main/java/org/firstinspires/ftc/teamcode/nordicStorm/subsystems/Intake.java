@@ -4,7 +4,7 @@ import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import static org.firstinspires.ftc.teamcode.nordicStorm.subsystems.NordicConstants.intakeMotorName;
+import static org.firstinspires.ftc.teamcode.nordicStorm.NordicConstants.intakeMotorName;
 
 public class Intake extends SubsystemBase {
 
@@ -25,8 +25,14 @@ public class Intake extends SubsystemBase {
         isRunning = doRun;
     }
 
+    public void runIntakeReverse(boolean doRun) {
+        int power = doRun ? 1 : 0;
+        intakeMotor.setPower(power);
+        isRunning = doRun;
+    }
+
     public void runIntakeSlow() {
         isRunning = true;
-        intakeMotor.setPower(-.75);
+        intakeMotor.setPower(-.5);
     }
 }
