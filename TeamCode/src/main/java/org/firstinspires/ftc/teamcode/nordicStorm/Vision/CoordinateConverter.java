@@ -8,5 +8,13 @@ public class CoordinateConverter {
         this.x = x;
         this.y = y;
     }
+
+    public static double xConvertToField(double headingRadians, double yRobotOffset, double xRobotOffset) {
+        return yRobotOffset * Math.cos(headingRadians) + xRobotOffset * Math.sin(headingRadians);
+    }
+
+    public static double yConvertToField(double headingRadians, double yRobotOffset, double xRobotOffset) {
+        return yRobotOffset * Math.sin(headingRadians) - xRobotOffset * Math.cos(headingRadians);
+    }
 }
 

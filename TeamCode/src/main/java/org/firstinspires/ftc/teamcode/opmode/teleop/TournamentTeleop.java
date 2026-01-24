@@ -39,7 +39,6 @@ public class TournamentTeleop extends OpMode {
     @Override
     public void start() {
         follower.startTeleopDrive();
-        langskip.limelight.start();
     }
 
 
@@ -51,6 +50,7 @@ public class TournamentTeleop extends OpMode {
         langskip.periodic(telemetry);
         telemetry.addData("Langskip state:", langskip.currentState);
         telemetry.addData("Heading Error: ", follower.getHeadingError());
+        telemetry.update();
         //telemetry.addData("Intake: ", a);
 
         if (langskip.currentState == Langskip.State.IDLE) {
@@ -97,7 +97,7 @@ public class TournamentTeleop extends OpMode {
 
         // Right Trigger = Intake
         if (gamepad1.right_trigger > .5 && !langskip.intake.isRunning()) {
-            langskip.intake.runIntake(true);
+            //langskip.intake.runIntake(true);
         }
 
         if (gamepad1.right_trigger < .1 && langskip.currentState == Langskip.State.IDLE && langskip.intake.isRunning()) {
@@ -105,7 +105,7 @@ public class TournamentTeleop extends OpMode {
         }
 
         if (gamepad1.left_trigger > .5 && !langskip.intake.isRunning()) {
-            langskip.intake.runIntakeReverse(true);
+            //langskip.intake.runIntakeReverse(true);
         }
 
         if (gamepad1.right_trigger < .1 && langskip.currentState == Langskip.State.IDLE && langskip.intake.isRunning()) {

@@ -48,13 +48,14 @@ public class Langskip {
     public enum State {
         HPINTAKE,
         AUTO_INTAKE,
+        CHARGING,
         AIMING,
         SHOOTING,
         AUTO_PARKING,
         IDLE
     }
 
-    public State currentState = State.IDLE;
+    public State currentState = State.AUTO_INTAKE;
     private final Pose shootingPose;
     private final boolean isTeleop;
 
@@ -68,14 +69,17 @@ public class Langskip {
         intake = new Intake(hardwareMap);
 
         limelight = hardwareMap.get(Limelight3A.class, NordicConstants.limelightName);
-        limelight.setPollRateHz(50);
+        limelight.start();
+        limelight.setPollRateHz(20);
         limelight.pipelineSwitch(1);
+
         visionHelper = new VisionHelper(5);
 
 
         this.isTeleop = isTeleop;
 
         signalLight = hardwareMap.get(Servo.class, signalLightName);
+        setSignalColor(.388);
         follower = driveTrain.follower;
 
         this.allianceColor = allianceColor;
@@ -111,7 +115,7 @@ public class Langskip {
 
         //if (innerSubsystem.getDistance() < 25) {
         if (visionHelper.seesBall()) {
-            setSignalColor(.72);
+            setSignalColor(visionHelper.getClosestColor());
         } else {
             if (allianceColor == NordicConstants.AllianceColor.BLUE) {
                 setSignalColor(.615);
@@ -120,7 +124,6 @@ public class Langskip {
             }
         }
 
-        telemetry.addData("Shooting distance: ", shootDistance);
         telemetry.addData("Follower Pose: ", follower.getPose());
 
         switch (currentState) {
@@ -142,12 +145,28 @@ public class Langskip {
                 break;
             case AUTO_INTAKE:
                 if (visionHelper.seesBall()) {
-                    CoordinateConverter target = visionHelper.getTargetCoordinates(visionHelper.getSmoothedClosest());
+                    SmoothedTarget closestBall = visionHelper.getSmoothedClosest();
+                    double smoothedArea = closestBall.area;
+                    CoordinateConverter target = visionHelper.getTargetCoordinates(closestBall);
+                    // TODO consider making this offset larger so holdPoint works better
                     double xRobotOffset = target.x;
                     double yRobotOffset = target.y + NordicConstants.limelightForwardOffset;
+
                     telemetry.addData("Limelight left/right: ", target.x);
                     telemetry.addData("Limelight forward/backwards: ", target.y);
+
+                    double xPose = CoordinateConverter.xConvertToField(follower.getHeading(), yRobotOffset, xRobotOffset);
+                    double yPose = CoordinateConverter.yConvertToField(follower.getHeading(), yRobotOffset, xRobotOffset);
+
+                    double fieldX = follower.getPose().getX() + xPose;
+                    double fieldY = follower.getPose().getY() + yPose;
+                    double heading = Math.atan(yPose / xPose); // In radians
+                    follower.holdPoint(new BezierPoint(fieldX, fieldY), heading);
+
+                    telemetry.addData("Ball Field Pose: ", new double[]{fieldX, fieldY});
                 }
+                break;
+            case CHARGING:
                 break;
             case AIMING:
                 double angleToGoal = driveTrain.getAngleToGoal();
