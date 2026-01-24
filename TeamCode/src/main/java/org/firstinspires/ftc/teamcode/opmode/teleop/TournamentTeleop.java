@@ -39,8 +39,9 @@ public class TournamentTeleop extends OpMode {
     @Override
     public void start() {
         follower.startTeleopDrive();
+        langskip.intake.turnOnLight();
     }
-
+// 94.4, 30
 
     @Override
     public void loop() {
@@ -97,15 +98,28 @@ public class TournamentTeleop extends OpMode {
 
         // Right Trigger = Intake
         if (gamepad1.right_trigger > .5 && !langskip.intake.isRunning()) {
-            //langskip.intake.runIntake(true);
+            langskip.intake.turnOnLight();
+            langskip.intake.runIntake(true);
         }
 
         if (gamepad1.right_trigger < .1 && langskip.currentState == Langskip.State.IDLE && langskip.intake.isRunning()) {
             langskip.intake.runIntake(false);
         }
 
+        if (gamepad2.dpadRightWasPressed()) {
+            langskip.changeState(Langskip.State.AUTO_INTAKE);
+        }
+
+        if (gamepad2.dpadRightWasReleased()) {
+            langskip.changeState(Langskip.State.IDLE);
+            follower.breakFollowing();
+            follower.startTeleopDrive();
+            langskip.a = !langskip.a;
+            langskip.intake.runIntake(false);
+        }
+
         if (gamepad1.left_trigger > .5 && !langskip.intake.isRunning()) {
-            //langskip.intake.runIntakeReverse(true);
+            langskip.intake.runIntakeReverse(true);
         }
 
         if (gamepad1.right_trigger < .1 && langskip.currentState == Langskip.State.IDLE && langskip.intake.isRunning()) {

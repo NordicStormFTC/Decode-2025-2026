@@ -4,8 +4,11 @@ import static org.firstinspires.ftc.teamcode.nordicStorm.NordicConstants.signalL
 
 
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.BezierPoint;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.HeadingInterpolator;
+import com.pedropathing.paths.Path;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -18,6 +21,7 @@ import org.firstinspires.ftc.teamcode.nordicStorm.Vision.CoordinateConverter;
 import org.firstinspires.ftc.teamcode.nordicStorm.Vision.SmoothedTarget;
 import org.firstinspires.ftc.teamcode.nordicStorm.Vision.VisionHelper;
 
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -45,6 +49,8 @@ public class Langskip {
 
     private final Follower follower;
 
+    private Path IntakePath;
+
     public enum State {
         HPINTAKE,
         AUTO_INTAKE,
@@ -55,9 +61,11 @@ public class Langskip {
         IDLE
     }
 
-    public State currentState = State.AUTO_INTAKE;
+    public State currentState = State.IDLE;
     private final Pose shootingPose;
     private final boolean isTeleop;
+
+    public boolean a = false;
 
 
     /**
@@ -109,19 +117,51 @@ public class Langskip {
     public void periodic(Telemetry telemetry) {
         double shootDistance = Math.sqrt(Math.pow(follower.getPose().getX() - shootingPose.getX(), 2) + Math.pow(follower.getPose().getY() - shootingPose.getY(), 2));
         innerSubsystem.periodic(telemetry, shootDistance);
-        if (llResultsAreGood()) {
-            visionHelper.update(limelight.getLatestResult().getDetectorResults());
-        }
+        //if (llResultsAreGood()) {
+        visionHelper.update(limelight.getLatestResult().getDetectorResults());
+        //}
 
         //if (innerSubsystem.getDistance() < 25) {
         if (visionHelper.seesBall()) {
-            setSignalColor(visionHelper.getClosestColor());
+            //setSignalColor(visionHelper.getClosestColor());
+            setSignalColor(.722);
         } else {
             if (allianceColor == NordicConstants.AllianceColor.BLUE) {
                 setSignalColor(.615);
             } else {
                 setSignalColor(.283);
             }
+        }
+
+
+        if (visionHelper.seesBall()) {
+            SmoothedTarget closestBall = visionHelper.getSmoothedClosest();
+            double smoothedArea = closestBall.area;
+            CoordinateConverter target = visionHelper.getTargetCoordinates(closestBall);
+            // TODO consider making this offset larger so holdPoint works better
+            double xRobotOffset = target.x;
+            double yRobotOffset = target.y + NordicConstants.limelightForwardOffset;
+
+            telemetry.addData("Limelight left/right: ", target.x);
+            telemetry.addData("Limelight forward/backwards: ", target.y);
+
+            double xPose = CoordinateConverter.xConvertToField(follower.getHeading(), yRobotOffset, xRobotOffset);
+            double yPose = CoordinateConverter.yConvertToField(follower.getHeading(), yRobotOffset, xRobotOffset);
+
+            double fieldX = follower.getPose().getX() + xPose;
+            double fieldY = follower.getPose().getY() + yPose;
+            double heading = Math.toDegrees(Math.atan2(fieldY - follower.getPose().getY(), fieldX - follower.getPose().getX()));
+            heading = (heading + 360) % 360;
+            if (!a) {
+                //follower.holdPoint(new BezierPoint(fieldX, fieldY), heading);
+                //follower.holdPoint(new Pose(follower.getPose().getX(), follower.getPose().getY()));
+                //follower.holdPoint(new BezierPoint(fieldX, fieldY), follower.getHeading());
+                //intake.runIntake(true);
+                //a = true;
+            }
+            //currentState = State.CHARGING;
+
+            telemetry.addData("Ball Field Pose: ", Arrays.toString(new double[]{fieldX, fieldY, (heading)}));
         }
 
         telemetry.addData("Follower Pose: ", follower.getPose());
@@ -152,21 +192,33 @@ public class Langskip {
                     double xRobotOffset = target.x;
                     double yRobotOffset = target.y + NordicConstants.limelightForwardOffset;
 
-                    telemetry.addData("Limelight left/right: ", target.x);
-                    telemetry.addData("Limelight forward/backwards: ", target.y);
+                    //telemetry.addData("Limelight left/right: ", target.x);
+                    //telemetry.addData("Limelight forward/backwards: ", target.y);
 
                     double xPose = CoordinateConverter.xConvertToField(follower.getHeading(), yRobotOffset, xRobotOffset);
                     double yPose = CoordinateConverter.yConvertToField(follower.getHeading(), yRobotOffset, xRobotOffset);
 
                     double fieldX = follower.getPose().getX() + xPose;
                     double fieldY = follower.getPose().getY() + yPose;
-                    double heading = Math.atan(yPose / xPose); // In radians
-                    follower.holdPoint(new BezierPoint(fieldX, fieldY), heading);
+                    double heading = Math.toDegrees(Math.atan2(fieldY - follower.getPose().getY(), fieldX - follower.getPose().getX()));
+                    heading = (heading + 360) % 360;
+                    if (!a) {
+                        //follower.holdPoint(new BezierPoint(fieldX, fieldY), heading);
+                        //follower.holdPoint(new Pose(follower.getPose().getX(), follower.getPose().getY()));
+                        //follower.holdPoint(new BezierPoint(fieldX, fieldY), follower.getHeading());
+                        IntakePath = new Path(new BezierPoint(fieldX, fieldY));
+                        IntakePath.setHeadingInterpolation(HeadingInterpolator.facingPoint(new Pose(fieldX, fieldY)));
+                        follower.followPath(IntakePath);
+                        intake.runIntake(true);
+                        a = true;
+                    }
+                    //currentState = State.CHARGING;
 
-                    telemetry.addData("Ball Field Pose: ", new double[]{fieldX, fieldY});
+                    //telemetry.addData("Ball Field Pose: ", Arrays.toString(new double[]{fieldX, fieldY, (heading)}));
                 }
                 break;
             case CHARGING:
+
                 break;
             case AIMING:
                 double angleToGoal = driveTrain.getAngleToGoal();

@@ -110,7 +110,7 @@ public class VisionHelper {
     }
 
     /**
-     * Convert the xDgree, yDegree, area data
+     * Convert the xDegree, yDegree, area data
      * from the parameter into x, y coordinate distances
      * from the limelight. (inches)
      */
