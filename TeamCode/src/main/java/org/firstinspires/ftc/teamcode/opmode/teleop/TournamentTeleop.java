@@ -89,28 +89,35 @@ public class TournamentTeleop extends OpMode {
         }
 
         // Right Trigger = Intake
+        // Right Bumper = Auto Intake
+
+        // Left Trigger = Run Intake Reverse
+        // Left Bumper = Human Player Intake
+
         // Right DPad = Move flipper up
         // Left DPad = Switch slow mode on/off
+        // Down Dpad = reset position
+
         // Y = Shooting
-        // Left Bumper = Auto Park
-        // Right Bumper = HP Intake
+        // A = Auto Park
+        // B = Open Gate
 
 
         // Right Trigger = Intake
         if (gamepad1.right_trigger > .5 && !langskip.intake.isRunning()) {
-            langskip.intake.turnOnLight();
             langskip.intake.runIntake(true);
         }
 
-        if (gamepad1.right_trigger < .1 && langskip.currentState == Langskip.State.IDLE && langskip.intake.isRunning()) {
+        if (gamepad1.right_trigger < .1 && gamepad1.left_trigger < .1 && langskip.currentState == Langskip.State.IDLE && langskip.intake.isRunning()) {
             langskip.intake.runIntake(false);
         }
 
-        if (gamepad2.dpadRightWasPressed()) {
+        if (gamepad1.rightBumperWasPressed()) {
             langskip.changeState(Langskip.State.AUTO_INTAKE);
         }
 
-        if (gamepad2.dpadRightWasReleased()) {
+        if (gamepad1.rightBumperWasReleased()) {
+            langskip.intake.turnOnLight();
             langskip.changeState(Langskip.State.IDLE);
             follower.breakFollowing();
             follower.startTeleopDrive();
@@ -122,8 +129,17 @@ public class TournamentTeleop extends OpMode {
             langskip.intake.runIntakeReverse(true);
         }
 
-        if (gamepad1.right_trigger < .1 && langskip.currentState == Langskip.State.IDLE && langskip.intake.isRunning()) {
+        if (gamepad1.leftBumperWasPressed()) {
+            langskip.changeState(Langskip.State.HPINTAKE);
+            follower.breakFollowing();
+        }
+
+        if (gamepad1.leftBumperWasReleased()) {
+            follower.setMaxPower(1);
             langskip.intake.runIntake(false);
+            langskip.changeState(Langskip.State.IDLE);
+            follower.breakFollowing();
+            follower.startTeleopDrive();
         }
 
         // Right DPad = Move flipper up
@@ -137,7 +153,6 @@ public class TournamentTeleop extends OpMode {
             langskip.innerSubsystem.moveFlipperDown();
         }
 
-
         //Slow Mode
         if (gamepad1.dpadLeftWasPressed()) {
             slowMode = !slowMode;
@@ -147,21 +162,12 @@ public class TournamentTeleop extends OpMode {
             follower.setPose(new Pose(72, 72, Math.toRadians(90)));
         }
 
-        /*if (gamepad1.dpadDownWasPressed()) {
-            a -= 20;
-            langskip.innerSubsystem.setIntakeSpped(a);
-        }
-
-        if (gamepad1.dpadUpWasPressed()) {
-            a += 20;
-            langskip.innerSubsystem.setIntakeSpped(a);
-        } */
-
         // Y = Shooting
         if (gamepad1.yWasPressed()) {
             langskip.changeState(Langskip.State.AIMING);
             langskip.intake.runIntakeSlow();
         }
+
         if (gamepad1.yWasReleased()) {
             langskip.changeState(Langskip.State.IDLE);
             langskip.innerSubsystem.setShooting(false);
@@ -170,26 +176,28 @@ public class TournamentTeleop extends OpMode {
             follower.startTeleopDrive();
         }
 
-        // Left Bumper = Auto Park
-        if (gamepad1.leftBumperWasPressed()) {
+        // A = Auto Park
+        if (gamepad1.aWasPressed()) {
             langskip.changeState(Langskip.State.AUTO_PARKING);
         }
 
-        if (gamepad1.leftBumperWasReleased()) {
+        if (gamepad1.aWasReleased()) {
             langskip.changeState(Langskip.State.IDLE);
             slowMode = true;
             follower.startTeleopDrive();
         }
 
-        // Right Bumper = Human Player Intake
-        if (gamepad1.rightBumperWasPressed()) {
-            langskip.changeState(Langskip.State.HPINTAKE);
+        // B = Open the Gate
+        if (gamepad1.bWasPressed()) {
+            langskip.changeState(Langskip.State.OPEN_GATE);
+            follower.breakFollowing();
         }
 
-        if (gamepad1.rightBumperWasReleased()) {
+        if (gamepad1.bWasReleased()) {
             follower.setMaxPower(1);
             langskip.intake.runIntake(false);
             langskip.changeState(Langskip.State.IDLE);
+            follower.breakFollowing();
             follower.startTeleopDrive();
         }
     }

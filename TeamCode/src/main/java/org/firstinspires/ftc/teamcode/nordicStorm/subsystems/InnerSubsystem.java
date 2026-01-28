@@ -66,8 +66,8 @@ public class InnerSubsystem {
         telemetry.addData("Target RPM: ", targetRPM);
 
 
-        if (shooting && atPoint && Math.abs(targetRPM - getRPM()) < 125) {
-            if (flipperIsDown && waitedSinceLastShot() && getDistance() < 25 && nonOscillatingRPM() && rampingTimeIsGood()) {
+        if (shooting && atPoint && Math.abs(targetRPM - getRPM()) < 80) {
+            if (flipperIsDown && waitedSinceLastShot() && getDistance() < 22 && nonOscillatingRPM() && rampingTimeIsGood()) {
                 moveFlipperUp();
                 timeSinceShot.resetTimer();
             }

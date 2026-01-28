@@ -11,11 +11,11 @@ public class NordicConstants {
     public static final String signalLightName = "light";
     public static final String limelightName = "limelight";
 
-    public static final double CAMERA_PITCH_DEG = -25.5;
+    public static final double CAMERA_PITCH_DEG = -29.5;
     public static final double TARGET_HEIGHT = 0.0635;
-    public static final double CAMERA_HEIGHT = .267;
+    public static final double CAMERA_HEIGHT = .26; // 10.25 inch
 
-    public static final double limelightForwardOffset = 7;
+    public static final double limelightForwardOffset = 12;
 
 
     // Physical location of each goal Position

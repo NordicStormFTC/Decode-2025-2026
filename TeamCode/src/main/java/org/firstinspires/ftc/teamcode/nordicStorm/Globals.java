@@ -44,4 +44,8 @@ public class Globals {
     @IgnoreConfigurable
     public static double shooterFeedForwards = 19.8;
 
+    public static double strafeP = .75;
+    public static double rotationP = .6;
+    public static double forwardScale = 3;
+
 }
