@@ -35,20 +35,20 @@ public class SelectableAuto extends OpMode {
     // Define the key poses
     private Pose startPose = Globals.startingObeliskSide ? new Pose(24.5, 123, Math.toRadians(142)) : new Pose(48, 9.5, Math.toRadians(90)); // Start Pose of our robot.
     private Pose scorePose = Globals.shootingClose ? new Pose(58, 82, Math.toRadians(135)) : new Pose(53, 15, Math.toRadians(270 - 338.84 + 180)); // Scoring Pose of the robot. // TODO (56, 119, 309)
-    private Pose beforeReleaseGatePose = new Pose(40, 75, Math.toRadians(90));
-    private Pose releaseGatePose = new Pose(20, 75, Math.toRadians(90)); // TODO
+    private Pose beforeReleaseGatePose = new Pose(25, 72, Math.toRadians(0));
+    private Pose releaseGatePose = new Pose(20, 72, Math.toRadians(0)); // TODO
     private Pose endPose = Globals.endingObeliskSide ? new Pose(44, 72, Math.toRadians(90)) : new Pose(48, 35, Math.toRadians(90));
 
     private final Pose[] ARTIFACT_POSES = {
-            new Pose(54, 81, Math.toRadians(180)), // PPG 83.5 49
-            new Pose(54, 61, Math.toRadians(180)), // PGP 59.5
-            new Pose(54, 37, Math.toRadians(180)), // GPP 35.5
-            new Pose(13.5, 25, Math.toRadians(-134)), // Before Human Player Balls
+            new Pose(54, 83.5, Math.toRadians(180)), // PPG 83.5 49
+            new Pose(54, 59.5, Math.toRadians(180)), // PGP 59.5
+            new Pose(54, 35.5, Math.toRadians(180)), // GPP 35.5
+            new Pose(11, 25, Math.toRadians(-134)), // Before Human Player Balls 13.5
 
-            new Pose(16, 83.5, Math.toRadians(180)), // After PPG
-            new Pose(14, 59.5, Math.toRadians(180)), // After PGP
-            new Pose(11, 35.5, Math.toRadians(180)), // After GPP
-            new Pose(13.5, 11, Math.toRadians(-134)) // After Human Player Balls
+            new Pose(20, 83.5, Math.toRadians(180)), // After PPG
+            new Pose(16, 59.5, Math.toRadians(180)), // After PGP
+            new Pose(13, 35.5, Math.toRadians(180)), // After GPP
+            new Pose(11, 11, Math.toRadians(-134)) // After Human Player Balls
     };
 
     private PathChain scorePreload, moveToEnd;
@@ -89,8 +89,9 @@ public class SelectableAuto extends OpMode {
         scorePreload = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, scorePose)) // Path from start to scoring position.
                 .addParametricCallback(.8, () -> follower.setMaxPower(.7))
-                .addParametricCallback(.45, () -> langskip.innerSubsystem.setShooting(true))
+                .addParametricCallback(.01, () -> langskip.innerSubsystem.setShooting(true))
                 .setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading())
+                .setBrakingStrength(.8)
                 .build();
 
         moveToEnd = follower.pathBuilder()
@@ -114,7 +115,8 @@ public class SelectableAuto extends OpMode {
             return follower.pathBuilder()
                     .addPath(new BezierLine(scorePose, beforeBall)) // Drive from the scoring position to the first spike mark
                     .addParametricCallback(.01, () -> langskip.intake.runIntake(false))
-                    .addParametricCallback(.85, () -> follower.setMaxPower(.85)) // When 80& of the way complete, slow speed to 60%
+                    //.addParametricCallback(.85, () -> follower.setMaxPower(.85)) // When 80& of the way complete, slow speed to 60 %
+                    .setBrakingStrength(.8)
                     .setLinearHeadingInterpolation(scorePose.getHeading(), beforeBall.getHeading())
                     .addPath(new BezierLine(beforeBall, afterBall)) // We are now inline with the balls, drive straight forwards.
                     .addParametricCallback(.01, () -> langskip.intake.runIntake(true)) // Turn on the intake
@@ -127,13 +129,15 @@ public class SelectableAuto extends OpMode {
                     .addPath(new BezierLine(afterBall, scorePose)) // After picking up the balls, move back to the scoring position
                     .addParametricCallback(.01, () -> follower.setMaxPower(1)) // Move at 20% speed
                     .addParametricCallback(.25, () -> langskip.intake.runIntake(false))
-                    .addParametricCallback(.6, () -> langskip.innerSubsystem.setShooting(true))
+                    .addParametricCallback(.4, () -> langskip.innerSubsystem.setShooting(true))
                     .setLinearHeadingInterpolation(afterBall.getHeading(), scorePose.getHeading(), .75)
+                    .setBrakingStrength(.8)
                     .build();
         } else {
             return follower.pathBuilder()
                     .addPath(new BezierLine(scorePose, beforeBall)) // Drive from the scoring position to the first spike mark
                     .addParametricCallback(.01, () -> langskip.intake.runIntake(false))
+                    .setBrakingStrength(.8)
                     .addParametricCallback(.8, () -> follower.setMaxPower(.6)) // When 80% of the way complete, slow speed to 60%
                     .setLinearHeadingInterpolation(scorePose.getHeading(), beforeBall.getHeading(), .75)
                     .addPath(new BezierLine(beforeBall, afterBall)) // We are now inline with the balls, drive straight forwards.
@@ -146,12 +150,14 @@ public class SelectableAuto extends OpMode {
                     .setLinearHeadingInterpolation(afterBall.getHeading(), beforeReleaseGatePose.getHeading(), .5)
                     .addPath(new BezierLine(beforeReleaseGatePose, releaseGatePose))
                     .addParametricCallback(.25, () -> follower.setMaxPower(.5))
-                    .addPath(new BezierLine(releaseGatePose, beforeBall))
-                    .addParametricCallback(.25, () -> follower.setMaxPower(.75))
-                    .addPath(new BezierLine(beforeBall, scorePose))
+                    .setLinearHeadingInterpolation(beforeReleaseGatePose.getHeading(), releaseGatePose.getHeading())
+                    //.addPath(new BezierLine(releaseGatePose, beforeBall))
+                    //.addParametricCallback(.25, () -> follower.setMaxPower(.75))
+                    .addPath(new BezierLine(releaseGatePose, scorePose))
                     .setLinearHeadingInterpolation(releaseGatePose.getHeading(), scorePose.getHeading(), .75)
                     .addParametricCallback(.1, () -> follower.setMaxPower(1)) // Drive at full speed.
                     .addParametricCallback(.65, () -> langskip.innerSubsystem.setShooting(true))
+                    .setBrakingStrength(.8)
                     .build();
         }
     }
@@ -184,6 +190,26 @@ public class SelectableAuto extends OpMode {
         ARTIFACT_POSES[7] = allPoses[12];
     }
 
+    private void setToShoot(int nextState) {
+        langskip.changeState(Langskip.State.AIMING);
+        langskip.innerSubsystem.setShooting(false);
+        //langskip.innerSubsystem.setShooting(true);
+        //langskip.intake.runIntake(true);
+        follower.setMaxPower(1);
+        actionTimer.resetTimer();
+        setPathState(nextState);
+    }
+
+    private void endShooting(int nextState, int pathsNumber) {
+        langskip.changeState(Langskip.State.IDLE);
+        langskip.innerSubsystem.setAtPoint(false);
+        langskip.innerSubsystem.setShooting(false);
+        langskip.intake.runIntake(false);
+        follower.followPath(paths[pathsNumber], true);
+        actionTimer.resetTimer();
+        setPathState(nextState);
+    }
+
     /**
      * This method updates the robot's autonomous path based on the current path state.
      */
@@ -196,73 +222,41 @@ public class SelectableAuto extends OpMode {
                 break;
             case 1:
                 if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > .2) {
-                    /* TODO Score Preload */
-                    langskip.innerSubsystem.setShooting(true);
-                    langskip.intake.runIntake(true);
-                    follower.setMaxPower(1);
-                    actionTimer.resetTimer();
-                    setPathState(2);
+                    setToShoot(2);
                 }
                 break;
             case 2:
-                if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 5) {
-                    langskip.innerSubsystem.setShooting(false);
-                    langskip.intake.runIntake(false);
-                    follower.followPath(paths[0], true);
-                    actionTimer.resetTimer();
-                    setPathState(3);
+                if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 6.5 || langskip.innerSubsystem.getShotCount() >= 3) {
+                    endShooting(3, 0);
                 }
                 break;
             case 3:
                 if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > .2) {
-                    actionTimer.resetTimer();
-                    /* TODO Score Sample */
-                    langskip.innerSubsystem.setShooting(true);
-                    langskip.intake.runIntake(true);
-                    actionTimer.resetTimer();
-                    setPathState(4);
+                    setToShoot(4);
                 }
                 break;
             case 4:
-                if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 5) {
-                    langskip.innerSubsystem.setShooting(false);
-                    follower.followPath(paths[1], true);
-                    langskip.intake.runIntake(false);
-                    actionTimer.resetTimer();
-                    setPathState(5);
+                if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 6.5 || langskip.innerSubsystem.getShotCount() >= 3) {
+                    endShooting(5, 1);
                 }
                 break;
             case 5:
                 if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > .2) {
-                    actionTimer.resetTimer();
-                    /* TODO Score Sample */
-                    langskip.innerSubsystem.setShooting(true);
-                    langskip.intake.runIntake(true);
-                    actionTimer.resetTimer();
-                    setPathState(6);
+                    setToShoot(6);
                 }
                 break;
             case 6:
-                if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 5) {
-                    langskip.innerSubsystem.setShooting(false);
-                    langskip.intake.runIntake(false);
-                    follower.followPath(paths[2], true);
-                    actionTimer.resetTimer();
-                    setPathState(7);
+                if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 6.5 || langskip.innerSubsystem.getShotCount() >= 3) {
+                    endShooting(7, 2);
                 }
                 break;
             case 7:
                 if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > .2) {
-                    actionTimer.resetTimer();
-                    /* TODO Score Sample */
-                    langskip.innerSubsystem.setShooting(true);
-                    langskip.intake.runIntake(true);
-                    actionTimer.resetTimer();
-                    setPathState(8);
+                    setToShoot(8);
                 }
                 break;
             case 8:
-                if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 5) {
+                if (!follower.isBusy() && actionTimer.getElapsedTimeSeconds() > 6.5 || langskip.innerSubsystem.getShotCount() >= 3) {
                     langskip.innerSubsystem.setShooting(false);
                     langskip.intake.runIntake(false);
                     follower.followPath(moveToEnd, true);
@@ -272,11 +266,6 @@ public class SelectableAuto extends OpMode {
             case -1:
                 if (!follower.isBusy()) {
                     follower.holdPoint(endPose);
-                    /*follower.followPath(follower.pathBuilder()
-                            .addPath(new BezierLine(follower.getPose(), endPose))
-                            .addParametricCallback(.1, () -> langskip.intake.runIntake(false))
-                            .setLinearHeadingInterpolation(follower.getHeading(), endPose.getHeading())
-                            .build()); */
                 }
         }
     }
@@ -293,7 +282,8 @@ public class SelectableAuto extends OpMode {
         telemetry.update();
 
         // If we are not outside of the starting zone at the end of auto, force it to leave.
-        if (opmodeTimer.getElapsedTimeSeconds() > 28) {
+        if (opmodeTimer.getElapsedTimeSeconds() > 28 && Globals.forceLeave) {
+            langskip.changeState(Langskip.State.IDLE);
             follower.breakFollowing();
             follower.setMaxPower(.6);
             langskip.innerSubsystem.setShooting(false);
@@ -314,8 +304,6 @@ public class SelectableAuto extends OpMode {
 
     @Override
     public void init_loop() {
-        buildConstantPaths();
-        buildPathsFromPanels();
         follower.update();
         telemetry.addData("Starting Pose: ", follower.getPose());
         telemetry.addData("Shooting Pose: ", scorePose);

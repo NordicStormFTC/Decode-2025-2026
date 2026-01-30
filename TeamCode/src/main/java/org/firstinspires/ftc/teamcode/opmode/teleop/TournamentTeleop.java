@@ -165,7 +165,6 @@ public class TournamentTeleop extends OpMode {
         // Y = Shooting
         if (gamepad1.yWasPressed()) {
             langskip.changeState(Langskip.State.AIMING);
-            langskip.intake.runIntakeSlow();
         }
 
         if (gamepad1.yWasReleased()) {

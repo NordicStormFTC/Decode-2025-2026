@@ -31,6 +31,8 @@ public class Globals {
 
     public static int openGateAfterPickup = 0; // If one, will empty gate after grabbing the first artifact set.
 
+    public static boolean forceLeave = true;
+
     // IMPORTANT: This needs to be set at the beginning of every match
     public static NordicConstants.AllianceColor ALLIANCE_COLOR = NordicConstants.AllianceColor.RED;
 
@@ -42,10 +44,19 @@ public class Globals {
     @IgnoreConfigurable
     public static double shooterI = 0;
     @IgnoreConfigurable
-    public static double shooterFeedForwards = 19.8;
+    public static double shooterFeedForwards = 17.5;
 
-    public static double strafeP = .75;
-    public static double rotationP = .6;
-    public static double forwardScale = 3;
+    @IgnoreConfigurable
+    public static double strafeP = 0;
+    @IgnoreConfigurable
+    public static double rotationP = .5;
+    @IgnoreConfigurable
+    public static double forwardScale = 5;
+
+    @IgnoreConfigurable
+    public static double rotationalP = 1;
+    @IgnoreConfigurable
+    public static double rotationalD = .1;
+
 
 }

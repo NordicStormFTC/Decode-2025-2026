@@ -10,4 +10,12 @@ public class Util {
             return x;
         }
     }
+
+    /**
+     * @param angle1 Source angle
+     * @param angle2 Target angle
+     */
+    public static double angleDiff(double angle1, double angle2) {
+        return Math.atan2(Math.sin(angle1 - angle2), Math.cos(angle1 - angle2));
+    }
 }

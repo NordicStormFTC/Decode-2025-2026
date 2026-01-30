@@ -27,12 +27,12 @@ public class InnerSubsystem {
     private boolean shooting = false;
     private boolean override = false;
     private boolean atPoint = true;
+    private int shotCount = 0;
     private final Timer atRPMsince = new Timer();
     private final Timer timeSinceShot = new Timer();
     private final Timer shootingSince = new Timer();
 
     private boolean flipperIsDown = true;
-    private int intakeSpeed = 2500;
 
 
     public InnerSubsystem(final HardwareMap hardwareMap) {
@@ -54,8 +54,8 @@ public class InnerSubsystem {
         double targetRPM;
         if (shooting) {
             targetRPM = findRPMFromDistance(distance);
-            //targetRPM = intakeSpeed;
         } else {
+            resetShotCount();
             shootingSince.resetTimer();
             targetRPM = 0;
             shootingMotor.setPower(0);
@@ -64,10 +64,11 @@ public class InnerSubsystem {
         setRPM(targetRPM);
         telemetry.addData("RPM: ", getRPM());
         telemetry.addData("Target RPM: ", targetRPM);
+        telemetry.addData("Ball Distance: ", getDistance());
 
 
-        if (shooting && atPoint && Math.abs(targetRPM - getRPM()) < 80) {
-            if (flipperIsDown && waitedSinceLastShot() && getDistance() < 22 && nonOscillatingRPM() && rampingTimeIsGood()) {
+        if (shooting && atPoint && Math.abs(targetRPM - getRPM()) < 100) {
+            if (flipperIsDown && waitedSinceLastShot() && getDistance() < 15 && nonOscillatingRPM() && rampingTimeIsGood()) {
                 moveFlipperUp();
                 timeSinceShot.resetTimer();
             }
@@ -81,6 +82,7 @@ public class InnerSubsystem {
             }
             if (timeSinceShot.getElapsedTimeSeconds() > .65) {
                 moveFlipperDown();
+                shotCountUp();
             }
         }
     }
@@ -90,7 +92,7 @@ public class InnerSubsystem {
     }
 
     private boolean nonOscillatingRPM() {
-        return atRPMsince.getElapsedTimeSeconds() > .25;
+        return atRPMsince.getElapsedTimeSeconds() > .15;
     }
 
     private boolean waitedSinceLastShot() {
@@ -109,12 +111,20 @@ public class InnerSubsystem {
         override = b;
     }
 
-    public void setIntakeSpped(int speed) {
-        intakeSpeed = speed;
-    }
-
     public void setAtPoint(boolean set) {
         this.atPoint = set;
+    }
+
+    public int getShotCount() {
+        return shotCount;
+    }
+
+    private void shotCountUp() {
+        shotCount++;
+    }
+
+    public void resetShotCount() {
+        shotCount = 0;
     }
 
     public void moveFlipperDown() {
@@ -130,7 +140,7 @@ public class InnerSubsystem {
     }
 
     public double findRPMFromDistance(double distance) {
-        return 10.4 * distance + 1924;
+        return 10.4 * distance + 2015;
     }
 
     public void setShooting(boolean doShoot) {

@@ -23,6 +23,8 @@ import org.firstinspires.ftc.teamcode.nordicStorm.Util;
 import org.firstinspires.ftc.teamcode.nordicStorm.Vision.CoordinateConverter;
 import org.firstinspires.ftc.teamcode.nordicStorm.Vision.SmoothedTarget;
 import org.firstinspires.ftc.teamcode.nordicStorm.Vision.VisionHelper;
+import org.firstinspires.ftc.teamcode.pedroPathing.util.CustomPIDFCoefficients;
+import org.firstinspires.ftc.teamcode.pedroPathing.util.PIDFController;
 
 import java.util.Arrays;
 import java.util.List;
@@ -52,6 +54,8 @@ public class Langskip {
     private final NordicConstants.AllianceColor allianceColor;
 
     private final Follower follower;
+
+    private final PIDFController rotationPIDController = new PIDFController(new CustomPIDFCoefficients(Globals.rotationalP, 0, Globals.rotationalD, 0));
 
     private Path IntakePath;
 
@@ -83,7 +87,7 @@ public class Langskip {
 
         limelight = hardwareMap.get(Limelight3A.class, NordicConstants.limelightName);
         limelight.setPollRateHz(90);
-        limelight.pipelineSwitch(1);
+        limelight.pipelineSwitch(0);
         limelight.start();
 
         visionHelper = new VisionHelper(5);
@@ -100,7 +104,7 @@ public class Langskip {
         gatePose = allianceColor == NordicConstants.AllianceColor.RED ? new Pose(126.4, 69, Math.toRadians(180)) : new Pose(18.3, 69, Math.toRadians(0));
 
         beforeHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(106, 12, Math.toRadians(0)) : new Pose(38, 12, Math.toRadians(180));
-        afterHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(132, 12, Math.toRadians(180)) : new Pose(12, 12, Math.toRadians(0));
+        afterHPIntake = allianceColor == NordicConstants.AllianceColor.BLUE ? new Pose(132, 12, Math.toRadians(0)) : new Pose(12, 12, Math.toRadians(180));
     }
 
     public Follower getFollower() {
@@ -121,7 +125,7 @@ public class Langskip {
         visionHelper.update(limelight.getLatestResult().getDetectorResults(), follower);
 
         if (currentState == State.AIMING || currentState == State.SHOOTING) {
-            if (innerSubsystem.getDistance() < 25) {
+            if (innerSubsystem.getDistance() < 22) {
                 setSignalColor(.388);
             }
         } else if (visionHelper.seesBall()) {
@@ -134,18 +138,12 @@ public class Langskip {
             }
         }
 
-
-        if (visionHelper.seesBall()) {
-            CoordinateConverter fieldCoords = visionHelper.getFieldCoordinates(follower);
-            double heading = Math.toDegrees(Math.atan2(fieldCoords.y - follower.getPose().getY(), fieldCoords.x - follower.getPose().getX()));
-            heading = (heading + 360) % 360;
-            telemetry.addData("Ball Field Pose: ", Arrays.toString(new double[]{fieldCoords.x, fieldCoords.y, (heading)}));
-        }
-
+        telemetry.addData("Langskip state:", this.currentState);
         telemetry.addData("Follower Pose: ", follower.getPose());
 
         switch (currentState) {
             case HPINTAKE:
+                intake.runIntake(true);
                 if (!follower.isBusy()) {
                     follower.holdPoint(new BezierPoint(afterHPIntake.getX(), afterHPIntake.getY()), afterHPIntake.getHeading());
                     /*PathChain HPIntake = follower.pathBuilder()
@@ -165,12 +163,12 @@ public class Langskip {
                 if (visionHelper.seesBall()) {
                     CoordinateConverter ballFromLimelight = visionHelper.getTargetCoordinates(visionHelper.getSmoothedClosest());
                     double xError = Util.clamp(ballFromLimelight.x / 23, -1, 1);
-                    double forward = Util.clamp((1 - Math.abs(xError) * Globals.forwardScale) * .5, 0, .5);
-                    double rotation = -xError * Globals.rotationP;
+                    double forward = Util.clamp((1 - Math.abs(xError) * Globals.forwardScale) * .5, 0, .3);
+                    double rotation = Util.clamp(-xError * Globals.rotationP, -.25, .25);
                     double strafe = -xError * Globals.strafeP;
                     follower.setTeleOpDrive(forward, strafe, rotation, true);
                     intake.runIntake(true);
-                    if (ballFromLimelight.y < 8.5) {
+                    if (ballFromLimelight.y < 8.5 && false) {
                         currentState = State.CHARGING;
                         chargeTimer.resetTimer();
                         intake.turnOffLight();
@@ -186,20 +184,31 @@ public class Langskip {
                 }
                 break;
             case AIMING:
+                intake.runIntakeSlow();
                 double angleToGoal = driveTrain.getAngleToGoal();
                 telemetry.addData("Angle to goal degrees: ", Math.toDegrees(angleToGoal));
                 telemetry.addData("Heading: ", Math.toDegrees(follower.getHeading()));
-
-                follower.turnTo(angleToGoal);
-                if (this.isTeleop) {
+                //follower.turnTo(angleToGoal);
+                double rotationalError = Util.angleDiff(follower.getHeading(), angleToGoal);
+                if (this.isTeleop || true) {
                     innerSubsystem.setShooting(true);
                 }
+                rotationPIDController.updateError(rotationalError);
+                double rotation = rotationPIDController.runPIDF();
+                if (Math.abs(rotation) < .1 && Math.abs(rotationalError) > .005) {
+                    rotation = .1 * Math.signum(rotation);
+                }
 
-                if (Math.abs(follower.getHeading() - angleToGoal) < .035 || (Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI < .035) && Math.abs(follower.getHeading()) + Math.abs(angleToGoal) - 2 * Math.PI > 0) {
+                follower.setTeleOpDrive(0, 0, -rotation, true);
+                telemetry.addData("Angle diff: ", Util.angleDiff(follower.getHeading(), angleToGoal));
+                if (Math.abs(Util.angleDiff(follower.getHeading(), angleToGoal)) < .035) {
+                    innerSubsystem.setAtPoint(true);
+
                     currentState = State.SHOOTING;
                     if (this.isTeleop) {
-                        innerSubsystem.setAtPoint(true);
                         follower.holdPoint(follower.getPose());
+                    } else {
+                        follower.setTeleOpDrive(0, 0, 0, true);
                     }
                 }
 

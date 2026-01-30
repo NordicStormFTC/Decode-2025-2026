@@ -17,11 +17,12 @@ public class Constants {
 
 
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(8.65)
+            .mass(9.2)
             .forwardZeroPowerAcceleration(-32.35)
             .lateralZeroPowerAcceleration(-72.805)
-            .headingPIDFCoefficients(new PIDFCoefficients(2.1, 0, .01, .1)) //2.1
-            .translationalPIDFCoefficients(new PIDFCoefficients(.02, 0, 0.001, .02))
+            .headingPIDFCoefficients(new PIDFCoefficients(1.8, 0, .008, .1)) //2.1
+            .translationalPIDFCoefficients(new PIDFCoefficients(0, 0, 0, 0))
+            .translationalPIDFCoefficients(new PIDFCoefficients(.2, 0, 0.001, .02))
             .centripetalScaling(.0005);
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
